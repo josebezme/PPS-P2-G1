@@ -65,6 +65,7 @@ public class Team implements hoop.sim.Team {
 		// Keep track of these players for the game Jose & Jiang & Albert
 	}
 
+	// pick team.
 	public int[] pickTeam(String opponent, int totalPlayers, Result[] history) {
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
 		// Here we find out how many players we have for the game.
