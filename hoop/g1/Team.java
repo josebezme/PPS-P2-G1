@@ -59,14 +59,15 @@ public class Team implements hoop.sim.Team {
 		}
 	}
 
+	@Override
 	public void opponentTeam(int[] opponentPlayers) {
 		log("Called opponentTeam()");
 		// We're told what players were picked to play us. 123
 		// Keep track of these players for the game Jose & Jiang & Albert
 	}
 
-	// pick team.
-	public int[] pickTeam(String opponent, int totalPlayers, Result[] history) {
+	@Override
+	public int[] pickTeam(String opponent, int totalPlayers, hoop.sim.Game[] history) {
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
 		// Here we find out how many players we have for the game.
 		
@@ -97,6 +98,7 @@ public class Team implements hoop.sim.Team {
 		return result;
 	}
 
+	@Override
 	public int pickAttack(int yourScore, int opponentScore)
 	{
 		log("Called pickAttack()");
@@ -135,6 +137,7 @@ public class Team implements hoop.sim.Team {
 	 *  0 - For shoot
 	 *  # - Of player to pass to
 	 */
+	@Override
 	public int action(int[] defenders)
 	{
 		
