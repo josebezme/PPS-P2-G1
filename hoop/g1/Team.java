@@ -178,6 +178,7 @@ public class Team implements hoop.sim.Team {
 		return 0;
 	}
 
+	// Pick defend.
 	public int[] pickDefend(int yourScore, int oppScore, int holder)
 	{
 		log("Called pickDefend()");
