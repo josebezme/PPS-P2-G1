@@ -6,7 +6,7 @@ public interface Team {
 	public String name();
 
 	/* return 5 players in 1,2,3,4,...,P where P total players */
-	public int[] pickTeam(String opponent, int totalPlayers, Result[] history);
+	public int[] pickTeam(String opponent, int totalPlayers, Game[] history);
 
 	/* get players of opponent team */
 	public void opponentTeam(int[] opponentPlayers);

@@ -102,11 +102,11 @@ public class Hoop {
 		for (int t = 0 ; t != teams.length ; ++t)
 			for (int game = 0 ; game < selfGames ; ++game)
 				play(teams[t], teams[t], stats[t], stats[t],
-				     gameTurns, gen, new Result[0]);
+				     gameTurns, gen, new Game[0]);
 		// tournament schedule
 		Match[][] schedule = schedule(teams, gen);
 		// tournament history
-		Vector <Result> history = new Vector <Result> ();
+		Vector <Game> history = new Vector <Game> ();
 		// points
 		int[] points = new int [teams.length];
 		Arrays.fill(points, 0);
@@ -129,15 +129,14 @@ public class Hoop {
 		// for each round in the tournament
 		for (int r = 0 ; r != schedule.length ; ++r) {
 			// history of previous rounds
-			Result[] currentHistory = history.toArray(new Result[0]);
+			Game[] currentHistory = history.toArray(new Game[0]);
 			for (int g = 0 ; g != schedule[r].length ; ++g) {
 				Match m = schedule[r][g];
 				// play the game
-				int[] score = play(teams[m.t1], teams[m.t2], stats[m.t1], stats[m.t2], gameTurns, gen, currentHistory);
+				Game a = play(teams[m.t1], teams[m.t2], stats[m.t1], stats[m.t2], gameTurns, gen, currentHistory);
+				history.add(a);
 				// update points
-				points[score[0] > score[1] ? m.t1 : m.t2]++;
-				// update history
-				history.add(new Result(teams[m.t1].name(), teams[m.t2].name(), score[0], score[1]));
+				points[a.scoreA > a.scoreB ? m.t1 : m.t2]++;
 			}
 		}
 		// print final tournament points
@@ -150,10 +149,11 @@ public class Hoop {
 	}
 
 	// play one game between two teams (could be same)
-	private static int[] play(Team teamA, Team teamB,
-	                          double[][] statsA, double[][] statsB,
-	                          int turns, Random gen, Result[] history)
+	private static Game play(Team teamA, Team teamB,
+	                           double[][] statsA, double[][] statsB,
+	                           int turns, Random gen, Game[] history)
 	throws Exception {
+		int extra = turns / 8;
 		// pick players from teams
 		int[] playersA = teamA.pickTeam(teamB.name(), statsA.length, history);
 		if (!checkTeam(playersA, statsA.length))
@@ -182,6 +182,9 @@ public class Hoop {
 		int team = gen.nextInt(2);
 		Team[] p = new Team[] {teamA, teamB};
 		int[] score = new int[] {0, 0};
+		Vector <Game.Round> rounds = new Vector <Game.Round> ();
+		Vector <Integer> holders = new Vector <Integer> ();
+		Game.Action lastAction = Game.Action.SCORED;
 		// info
 		if (teamA == teamB)
 			System.err.println("Training game: " + teamA.name());
@@ -190,6 +193,10 @@ public class Hoop {
 		for (;;) {
 			// attack starts now
 			if (holder == 0) {
+				// add in rounds
+				if (!holders.isEmpty())
+					rounds.add(new Game.Round(toIntArray(holders), defenders,
+					                          team == 0, lastAction));
 				// swap teams
 				team = 1 - team;
 				passed = false;
@@ -200,6 +207,7 @@ public class Hoop {
 				// pick defenders
 				defenders = p[1 - team].pickDefend(score[1 - team], score[team], holder);
 				checkTeam(defenders, 5);
+				defenders = Arrays.copyOf(defenders, 5);
 				// display
 				if (team == 0)
 					printStartTeamA(holder, defenders, score, changed);
@@ -208,10 +216,14 @@ public class Hoop {
 				System.err.println("  Team " + (team == 0 ? "A" : "B") + " is now attacking  (turn " + turn + ")");
 				System.err.println("    Player " + holder + " holds the ball");
 				// check end of game (ties are not allowed)
-				if (turn++ >= turns && score[0] != score[1])
-					break;
+				if (turn++ == turns) {
+					if (score[0] != score[1]) break;
+					turns += extra;
+				}
 				changed = false;
+				holders.clear();
 			}
+			holders.add(holder);
 			if (team == 0)
 				printAttackTeamA(holder, defenders);
 			else
@@ -227,12 +239,14 @@ public class Hoop {
 				// attempt shoot
 				double prob = (stats[a][0] + stats[d][1]) / 2.0;
 				System.err.print("    Player " + holder + " shoots");
-				if (gen.nextDouble() > prob)
+				if (gen.nextDouble() > prob) {
 					System.err.println(" and misses.");
-				else {
+					lastAction = Game.Action.MISSED;
+				} else {
 					System.err.println(" and scores! (" + score[0] + "-" + score[1] + ")");
 					score[team]++;
 					changed = true;
+					lastAction = Game.Action.SCORED;
 				}
 			} else {
 				// check passing destination
@@ -240,20 +254,22 @@ public class Hoop {
 					throw new Exception("Invalid player to pass (please give one of 0,1,2,3,4,5)");
 				passed = true;
 				// try passing
-				double prob = (8.0 + stats[a][2] + stats[a][3]) / 10.0;
+				double prob = (8.0 + stats[a][2] + stats[d][3]) / 10.0;
 				System.err.print("    Player " + holder + " passes to player " + newHolder);
 				// pass missed
 				if (gen.nextDouble() <= prob)
 					System.err.println("");
 				else {
 					newHolder = 0;
+					lastAction = Game.Action.STOLEN;
 					System.err.println(" but the ball is stolen!");
 				}
 			}
 			holder = newHolder;
 		}
 		System.err.println(" Game is over! Score: " + score[0] + "-" + score[1]);
-		return score;
+		return new Game(teamA.name(), teamB.name(), score[0], score[1],
+		                playersA, playersB, rounds.toArray(new Game.Round[0]));
 	}
 
 	// schedule tournament
@@ -392,14 +408,23 @@ public class Hoop {
 	}
 
 	// merge history results
-	private static Result[] append(Result[] a, Result[] b)
+	private static Game[] append(Game[] a, Game[] b)
 	{
-		Result[] c = new Result[a.length + b.length];
+		Game[] c = new Game[a.length + b.length];
 		for (int i = 0 ; i != a.length ; ++i)
 			c[i] = a[i];
 		for (int i = 0 ; i != b.length ; ++i)
 			c[i + a.length] = b[i];
 		return c;
+	}
+
+	// convert to array of primitive ints
+	private static int[] toIntArray(Vector <Integer> v)
+	{
+		int[] r = new int [v.size()];
+		for (int i = 0 ; i != r.length ; ++i)
+			r[i] = v.get(i).intValue();
+		return r;
 	}
 
 	// digits of a number

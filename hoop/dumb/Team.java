@@ -1,18 +1,17 @@
 package hoop.dumb;
 
-import hoop.sim.Result;
+import hoop.sim.Game;
 import java.util.Arrays;
 import java.util.Random;
 
 public class Team implements hoop.sim.Team {
-
-	private static int versions;
 
 	public String name()
 	{
 		return "New York Dumbers" + (version == 1 ? "" : " v" + version);
 	}
 
+	private static int versions;
 	private final int version = ++versions;
 	private int[] last = null;
 	private int holder = 0;
@@ -38,7 +37,7 @@ public class Team implements hoop.sim.Team {
 
 	public void opponentTeam(int[] opponentPlayers) {}
 
-	public int[] pickTeam(String opponent, int totalPlayers, Result[] history)
+	public int[] pickTeam(String opponent, int totalPlayers, Game[] history)
 	{
 		if (!opponent.equals(name())) last = null;
 		int lastLen = last == null ? 0 : last.length;
