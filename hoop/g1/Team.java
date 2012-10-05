@@ -1,6 +1,7 @@
 package hoop.g1;
 
-import hoop.sim.Result;
+import hoop.sim.Game.Round;
+
 //here
 //Test Jiang
 import java.util.Random;
@@ -99,8 +100,7 @@ public class Team implements hoop.sim.Team {
 	}
 
 	@Override
-	public int pickAttack(int yourScore, int opponentScore)
-	{
+	public int pickAttack(int yourScore, int opponentScore, Round previousRound) {
 		log("Called pickAttack()");
 		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
 		if(game.selfGame) {
@@ -183,8 +183,8 @@ public class Team implements hoop.sim.Team {
 	}
 
 	// Pick defend.
-	public int[] pickDefend(int yourScore, int oppScore, int holder)
-	{
+	@Override
+	public int[] pickDefend(int yourScore, int opponentScore, int ballHolder, Round previousRound) {
 		log("Called pickDefend()");
 		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
 		if(game.selfGame) {

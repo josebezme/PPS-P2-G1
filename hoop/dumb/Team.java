@@ -51,7 +51,7 @@ public class Team implements hoop.sim.Team {
 		return result;
 	}
 
-	public int pickAttack(int yourScore, int opponentScore)
+	public int pickAttack(int yourScore, int opponentScore, Game.Round previousRound)
 	{
 		holder = gen.nextInt(5) + 1;
 		pass = true;
@@ -69,7 +69,7 @@ public class Team implements hoop.sim.Team {
 		return holder;
 	}
 
-	public int[] pickDefend(int yourScore, int oppScore, int holder)
+	public int[] pickDefend(int yourScore, int oppScore, int holder, Game.Round previousRound)
 	{
 		int[] defenders = new int [] {1,2,3,4,5};
 		shuffle(defenders, gen);

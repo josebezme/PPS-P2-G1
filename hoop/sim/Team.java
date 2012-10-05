@@ -12,11 +12,13 @@ public interface Team {
 	public void opponentTeam(int[] opponentPlayers);
 
 	/* return one of 1,2,3,4,5 to pick initial ball holder */
-	public int pickAttack(int yourScore, int opponentScore);
+	public int pickAttack(int yourScore, int opponentScore,
+	                      Game.Round previousRound);
 
 	/* if 0 then shoot, otherwise pass to 1,2,3,4,5 */
 	public int action(int[] defenders);
 
 	/* pick defenders, use 1,2,3,4,5 for players */
-	public int[] pickDefend(int yourScore, int opponentScore, int ballHolder);
+	public int[] pickDefend(int yourScore, int opponentScore, int ballHolder,
+	                        Game.Round previousRound);
 }
