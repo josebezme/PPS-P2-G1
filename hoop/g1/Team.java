@@ -16,6 +16,8 @@ public class Team implements hoop.sim.Team, Logger {
 	private static final boolean DEBUG = true;
 	private static final int TEAM_SIZE = 5;
 	
+	private static boolean startedTournament;
+	
 	public enum Status {
 		DEFENDING,
 		START,
@@ -83,6 +85,11 @@ public class Team implements hoop.sim.Team, Logger {
 			game.selfGame = true;
 			games[currentPerspective] = game;
 			currentPerspective = (currentPerspective + 1) % 2;
+		} else {
+			if(!startedTournament) {
+				startedTournament = true;
+				log("STARTED_TOURN");
+			}
 		}
 		
 		// First initialize the scores.

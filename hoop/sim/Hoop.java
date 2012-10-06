@@ -89,7 +89,7 @@ public class Hoop {
 			System.exit(1);
 		}
 		// games with yourself
-		selfGames = 10;
+		selfGames = 100;
 		if (args.length > 2)
 			selfGames = Integer.parseInt(args[2]);
 		// games with each opponent
