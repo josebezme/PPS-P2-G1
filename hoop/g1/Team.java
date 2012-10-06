@@ -358,7 +358,7 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 			pickingDefense = ++pickingDefense % 2;
 			
-			int ballHolder = shooter + 1;
+			int ballHolder = ((shooter + 1) % TEAM_SIZE) + 1;
 			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder);
 			return ballHolder;
 		}
