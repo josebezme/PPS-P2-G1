@@ -77,7 +77,7 @@ public class Hoop {
 
 	public static void main(String[] args) throws Exception
 	{
-		boolean display = false;
+		boolean display = true;
 		// path with players
 		String playerPath = "hoop/players.list";
 		if (args.length > 0)

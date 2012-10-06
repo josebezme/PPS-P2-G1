@@ -268,7 +268,6 @@ public class Team implements hoop.sim.Team, Logger {
 		private int totalPlayers;
 		private int games;
 		private int turns;
-		
 		private int firstPivot;
 		private int secondPivot;
 		
@@ -294,7 +293,7 @@ public class Team implements hoop.sim.Team, Logger {
 			this.totalPlayers = players;
 			this.games = games;
 			this.turns = turns;
-			
+
 			shotsMade = new int[players];
 			shotsTaken = new int[players];
 			
@@ -305,6 +304,8 @@ public class Team implements hoop.sim.Team, Logger {
 				secondPivot = gen.nextInt(players) + 1;
 			}
 			
+			logger.log("First pivot is: " + firstPivot);
+			logger.log("Second pivot is: " + secondPivot);
 			currentPlayer = 1;
 			while(currentPlayer == firstPivot || currentPlayer == secondPivot) {
 				currentPlayer++;
@@ -358,7 +359,7 @@ public class Team implements hoop.sim.Team, Logger {
 			pickingDefense = ++pickingDefense % 2;
 			
 			int ballHolder = shooter + 1;
-			logger.log("Picker: ballHolder: " + ballHolder);
+			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder);
 			return ballHolder;
 		}
 		
@@ -377,12 +378,12 @@ public class Team implements hoop.sim.Team, Logger {
 				case START:
 					// do the pass.
 					int nextHolder = shooter + 1;
-					logger.log("Passing to " + nextHolder);
+					logger.log(whatTeam("attack") + ": Passing to --> playerID " + players[shooter] + " ( [Sim#]: " + nextHolder + ") ");
 					move = new Move(lastMove.ourPlayer, nextHolder, Status.PASSING);
 					break;
 				case PASSING:
 					// Shoot
-					logger.log("Shooting...");
+					logger.log("Shooting..." + " from " + whatTeam("attack"));
 					move = new Move(lastMove.ourPlayer, 0, Status.SHOOTING);
 					break;
 				default:
@@ -408,9 +409,8 @@ public class Team implements hoop.sim.Team, Logger {
 			for(int i = 1; i < TEAM_SIZE; i++) {
 				match[i] = ((shooter + i) % TEAM_SIZE) + 1;
 			}
-			
-			
-			logger.log("Picker: DefMatch: " + Arrays.toString(match));
+
+			logger.log("Picker: DefMatch: " + Arrays.toString(match) + " of " + whatTeam("defend"));
 			return match;
 		}
 		
@@ -418,7 +418,19 @@ public class Team implements hoop.sim.Team, Logger {
 			this.logger = logger;
 		}
 
+		public String whatTeam(String attackOrDefend){
+			//depending on the state of the game, returns the attacking team 
+
+				if(attackOrDefend.equals("attack"))
+					return ( changeShooter == 0 )? "Team A" : "Team B" ;
+				else
+					return ( changeShooter == 0 )? "Team B" : "Team A" ;
+
+		}
+
+
 	}
+
 
 	public static final Logger DEFAULT_LOGGER = new Logger() {
 		@Override
