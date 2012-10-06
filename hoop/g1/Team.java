@@ -1,25 +1,29 @@
 package hoop.g1;
 
 import hoop.sim.Game.Round;
+import hoop.sim.Hoop;
 
+import java.util.Arrays;
 //here
 //Test Jiang
 import java.util.Random;
 
-public class Team implements hoop.sim.Team {
+public class Team implements hoop.sim.Team, Logger {
 	
 	private static int versions;
 	
+	private static final Random gen = new Random();
 	private static final boolean DEBUG = true;
+	private static final int TEAM_SIZE = 5;
 	
-	enum Status {
+	public enum Status {
 		DEFENDING,
 		START,
 		PASSING,
 		SHOOTING
 	}
 	
-	private void log(String message) {
+	public void log(String message) {
 		if(DEBUG) {
 			System.err.println(name() + ": "  + message);			
 		}
@@ -31,10 +35,8 @@ public class Team implements hoop.sim.Team {
 	}
 
 	private final int version = ++versions;
-	private int[] last = null;
 	private int holder = 0;
-	private boolean pass = false;
-	private Random gen = new Random();
+	private TeamPicker picker;
 
 	private Game game;
 	
@@ -87,20 +89,19 @@ public class Team implements hoop.sim.Team {
 		game.ourScore = -1;
 		game.theirScore = 0;
 		
-		if (!opponent.equals(name())) last = null;
-		int lastLen = last == null ? 0 : last.length;
-		int[] result = new int [5];
-		for (int i = 0 ; i != 5 ; ++i) {
-			int x = gen.nextInt(totalPlayers) + 1;
-			if (in(last, lastLen, x) || in(result, i, x)) i--;
-			else result[i] = x;
+		if(picker == null) {
+			picker = new PivotTeamPicker();
+			picker.initialize(totalPlayers, Hoop.selfGames(), Hoop.gameTurns());
+			picker.setLogger(this);
 		}
-		last = result;
-		return result;
+		
+		return picker.pickTeam();
 	}
 
 	@Override
 	public int pickAttack(int yourScore, int opponentScore, Round previousRound) {
+		picker.reportLastRound(previousRound);
+		
 		log("Called pickAttack()");
 		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
 		if(game.selfGame) {
@@ -120,11 +121,11 @@ public class Team implements hoop.sim.Team {
 			// They made their shot.
 		}
 		
-		
-		// The person who is going to pass first.
-		// Simple version: who's our best passer?
-		holder = gen.nextInt(5) + 1;
-		pass = true;
+		if(game.selfGame) {
+			holder =  picker.getBallHolder();
+		} else {
+			holder = gen.nextInt(5) + 1;
+		}
 		
 		// Set status to holding until action.
 		game.lastMove = new Move(holder, 0, Status.START);
@@ -138,8 +139,13 @@ public class Team implements hoop.sim.Team {
 	 *  # - Of player to pass to
 	 */
 	@Override
-	public int action(int[] defenders)
-	{
+	public int action(int[] defenders) {
+		
+		if(game.selfGame) {
+			Move m = picker.action(defenders, attackingGame.lastMove);
+			attackingGame.lastMove = m;
+			return (m.action == Status.SHOOTING) ? 0 : m.toPlayer;
+		}
 		
 		switch(attackingGame.lastMove.action) {
 			case START:  
@@ -151,14 +157,16 @@ public class Team implements hoop.sim.Team {
 				// decide
 				// Also who to pass to??
 				
-				// last move is holder is passing to the new holder. 
-				attackingGame.lastMove = new Move(holder, defenders[holder - 1], Status.PASSING);
+				// last move is holder is passing to the new holder.
+				
+				int oldHolder = holder;
 				
 				int newHolder = holder;
 				while (newHolder == holder)
 					newHolder = gen.nextInt(5) + 1;
 				holder = newHolder;
 				
+				attackingGame.lastMove = new Move(oldHolder, newHolder, Status.PASSING);
 				return holder;
 				
 				
@@ -170,7 +178,7 @@ public class Team implements hoop.sim.Team {
 				
 				//lastMove = shooting move.
 				
-				attackingGame.lastMove = new Move(holder, defenders[holder - 1], Status.SHOOTING);
+				attackingGame.lastMove = new Move(holder, 0, Status.SHOOTING);
 				return 0;// return 0 cause we're shooting.
 				
 			case DEFENDING:
@@ -223,11 +231,190 @@ public class Team implements hoop.sim.Team {
 		// We're on defense so our last move is not defending.
 		game.lastMove = new Move(0, 0, Status.DEFENDING);
 		
-		
+		if(game.selfGame) {
+			return picker.getDefenseMatch();
+		}
 		
 		int[] defenders = new int [] {1,2,3,4,5};
 		shuffle(defenders, gen);
 		return defenders;
 	}
+	
+	public interface TeamPicker {
+		void initialize(int players, int games, int turns);
+		int[] pickTeam();
+		Move action(int[] defenders, Move lastMove);
+		void reportLastRound(Round previousRound);
+		
+		int[] getDefenseMatch();
+		int getBallHolder();
+		
+		void setLogger(Logger logger);
+	}
+	
+	public static class PivotTeamPicker implements TeamPicker {
+		
+		private int totalPlayers;
+		private int games;
+		private int turns;
+		
+		private int firstPivot;
+		private int secondPivot;
+		
+		private int[] shotsMade;
+		private int[] shotsTaken;
+		
+		private int[] teamA = new int[TEAM_SIZE];
+		private int[] teamB = new int[TEAM_SIZE];
+		
+		private int shooter = -1;
+		private int changeShooter = 0;
+		
+		private int pickingTeam; // Changes every game twice.
+		private int currentPlayer;
+		
+		private int pickingDefense; // Changes every turn.
+		
+		private Logger logger = DEFAULT_LOGGER;
+		
 
+		@Override
+		public void initialize(int players, int games, int turns) {
+			this.totalPlayers = players;
+			this.games = games;
+			this.turns = turns;
+			
+			shotsMade = new int[players];
+			shotsTaken = new int[players];
+			
+			firstPivot = gen.nextInt(players) + 1;
+			secondPivot = firstPivot;
+			
+			while(secondPivot == firstPivot) {
+				secondPivot = gen.nextInt(players) + 1;
+			}
+			
+			currentPlayer = 1;
+			while(currentPlayer == firstPivot || currentPlayer == secondPivot) {
+				currentPlayer++;
+			}
+		}
+
+		@Override
+		public int[] pickTeam() {
+			
+			int curPos = currentPlayer;
+			
+			int[] team = null;
+			if(pickingTeam++ % 2 == 0) {
+				team = teamA;
+				team[0] = firstPivot;
+			} else {
+				team = teamB;
+				team[0] = secondPivot;
+			}
+			
+			for(int i = 1; i < TEAM_SIZE;) {
+				if(curPos != firstPivot && curPos != secondPivot) {
+					team[i] = curPos;
+					i++;
+				}
+				
+				curPos = ++curPos % totalPlayers;
+				if(curPos == 0) {
+					curPos = totalPlayers;
+				}
+			}
+			
+			currentPlayer = curPos;
+			
+			return team;
+		}
+
+		@Override
+		public int getBallHolder() {
+			if(changeShooter == 0) {
+				shooter = ++shooter % TEAM_SIZE;
+			}
+			changeShooter = ++changeShooter % 2;
+			
+			int[] players = null;
+			if(pickingDefense == 0) {
+				players = teamA;
+			} else {
+				players = teamB;
+			}
+			pickingDefense = ++pickingDefense % 2;
+			
+			int ballHolder = shooter + 1;
+			logger.log("Picker: ballHolder: " + ballHolder);
+			return ballHolder;
+		}
+		
+		@Override
+		public Move action(int[] defenders, Move lastMove) {
+			Move move = null;
+			
+			int[] players = null;
+			if(pickingDefense == 0) {
+				players = teamB;
+			} else {
+				players = teamA;
+			}
+			
+			switch(lastMove.action) {
+				case START:
+					// do the pass.
+					int nextHolder = shooter + 1;
+					logger.log("Passing to " + nextHolder);
+					move = new Move(lastMove.ourPlayer, nextHolder, Status.PASSING);
+					break;
+				case PASSING:
+					// Shoot
+					logger.log("Shooting...");
+					move = new Move(lastMove.ourPlayer, 0, Status.SHOOTING);
+					break;
+				default:
+					throw new IllegalArgumentException("Invalid status: " + lastMove.action);
+				
+			}
+			
+			return move;
+		}
+
+		@Override
+		public void reportLastRound(Round previousRound) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public int[] getDefenseMatch() {
+			
+			int[] match = new int[TEAM_SIZE];
+			
+			match[0] = shooter + 1;
+			for(int i = 1; i < TEAM_SIZE; i++) {
+				match[i] = ((shooter + i) % TEAM_SIZE) + 1;
+			}
+			
+			
+			logger.log("Picker: DefMatch: " + Arrays.toString(match));
+			return match;
+		}
+		
+		public void setLogger(Logger logger) {
+			this.logger = logger;
+		}
+
+	}
+	
+	public static final Logger DEFAULT_LOGGER = new Logger() {
+		@Override
+		public void log(String message) {
+			System.out.println(message);
+		}
+	};
+	
+	
 }
