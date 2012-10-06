@@ -241,14 +241,25 @@ public class Team implements hoop.sim.Team, Logger {
 	}
 	
 	public interface TeamPicker {
+		//intitalize the total # of players, # of games, and # of turns per game
 		void initialize(int players, int games, int turns);
+
+		//Returns the array of teams
 		int[] pickTeam();
+
+		//Returns the Move object based on the defenders & lastMove
 		Move action(int[] defenders, Move lastMove);
+
+		//Reports previous Rounds
 		void reportLastRound(Round previousRound);
 		
+		//Returns the array of defense matchup
 		int[] getDefenseMatch();
+
+		//Returns who will be the starting player of the game
 		int getBallHolder();
 		
+		//logger
 		void setLogger(Logger logger);
 	}
 	
@@ -271,7 +282,7 @@ public class Team implements hoop.sim.Team, Logger {
 		private int changeShooter = 0;
 		
 		private int pickingTeam; // Changes every game twice.
-		private int currentPlayer;
+		private int currentPlayer; //
 		
 		private int pickingDefense; // Changes every turn.
 		
@@ -306,7 +317,7 @@ public class Team implements hoop.sim.Team, Logger {
 			int curPos = currentPlayer;
 			
 			int[] team = null;
-			if(pickingTeam++ % 2 == 0) {
+			if(pickingTeam++ % 2 == 0) { //this 
 				team = teamA;
 				team[0] = firstPivot;
 			} else {
@@ -408,7 +419,7 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 
 	}
-	
+
 	public static final Logger DEFAULT_LOGGER = new Logger() {
 		@Override
 		public void log(String message) {
