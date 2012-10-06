@@ -11,8 +11,6 @@ public class Hoop {
 
 	public static int gameTurns() { return gameTurns; }
 	
-	public static int selfGames() { return selfGames; }
-
 	// list files below a certain directory
 	// can filter those having a specific extension constraint
 	private static List <File> directoryFiles(String path, String extension) {

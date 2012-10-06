@@ -91,7 +91,7 @@ public class Team implements hoop.sim.Team, Logger {
 		
 		if(picker == null) {
 			picker = new PivotTeamPicker();
-			picker.initialize(totalPlayers, Hoop.selfGames(), Hoop.gameTurns());
+			picker.initialize(totalPlayers, 10, Hoop.gameTurns());
 			picker.setLogger(this);
 		}
 		
@@ -100,7 +100,9 @@ public class Team implements hoop.sim.Team, Logger {
 
 	@Override
 	public int pickAttack(int yourScore, int opponentScore, Round previousRound) {
-		picker.reportLastRound(previousRound);
+		if(game.selfGame) {
+			picker.reportLastRound(previousRound);
+		}
 		
 		log("Called pickAttack()");
 		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
@@ -271,8 +273,8 @@ public class Team implements hoop.sim.Team, Logger {
 		private int firstPivot;
 		private int secondPivot;
 		
-		private int[] shotsMade;
-		private int[] shotsTaken;
+		private int[][] shotsMade;
+		private int[][] shotsTaken;
 		
 		private int[] teamA = new int[TEAM_SIZE];
 		private int[] teamB = new int[TEAM_SIZE];
@@ -294,8 +296,8 @@ public class Team implements hoop.sim.Team, Logger {
 			this.games = games;
 			this.turns = turns;
 
-			shotsMade = new int[players];
-			shotsTaken = new int[players];
+			shotsMade = new int[2][players];
+			shotsTaken = new int[2][players];
 			
 			firstPivot = gen.nextInt(players) + 1;
 			secondPivot = firstPivot;
@@ -321,9 +323,11 @@ public class Team implements hoop.sim.Team, Logger {
 			if(pickingTeam++ % 2 == 0) { //this 
 				team = teamA;
 				team[0] = firstPivot;
+				logger.log("Team A...");
 			} else {
 				team = teamB;
 				team[0] = secondPivot;
+				logger.log("Team B...");
 			}
 			
 			for(int i = 1; i < TEAM_SIZE;) {
@@ -337,6 +341,8 @@ public class Team implements hoop.sim.Team, Logger {
 					curPos = totalPlayers;
 				}
 			}
+			
+			logger.log("Team: " + Arrays.toString(team));
 			
 			currentPlayer = curPos;
 			
@@ -396,8 +402,57 @@ public class Team implements hoop.sim.Team, Logger {
 
 		@Override
 		public void reportLastRound(Round previousRound) {
-			// TODO Auto-generated method stub
-			
+			// Because the first turn doesn't have previous round.
+			// previousRound.attacksA = A is attacking
+			if(previousRound != null) {
+				int pivot = 0;
+				int[] offTeam = null;
+				int[] defTeam = null;
+				
+				
+				logger.log("AttakcsA: " + previousRound.attacksA);
+				if(!previousRound.attacksA) {
+					
+					// B is attacking A.
+					pivot = 0;
+					offTeam = teamB;
+					defTeam = teamA;
+				} else {
+					// A is attacking B.
+					pivot = 1;
+					offTeam = teamA;
+					defTeam = teamB;
+				}
+				
+				// crunch da numbers.
+				
+				// 1 passes to 2
+				// and 2 shoots
+				// ballholder[] = {1, 2};
+				// last action?
+				
+				int holders[] = previousRound.holders();
+				logger.log("holders array: " + holders);
+				
+				int shooter = holders[holders.length - 1];
+				int playerId = offTeam[shooter -1];
+				
+				switch(previousRound.lastAction()) {
+				
+					case SCORED:
+						shotsMade[pivot][playerId - 1]++;
+					case MISSED:
+						shotsTaken[pivot][playerId - 1]++;
+						break;
+					default:
+						// dont care.
+				}
+				
+				logger.log("Pivot 1: " + Arrays.toString(shotsMade[0]));
+				logger.log("Pivot 1: " + Arrays.toString(shotsTaken[0]));
+				logger.log("Pivot 2: " + Arrays.toString(shotsMade[1]));
+				logger.log("Pivot 2: " + Arrays.toString(shotsTaken[1]));
+			}
 		}
 
 		@Override
@@ -405,9 +460,9 @@ public class Team implements hoop.sim.Team, Logger {
 			
 			int[] match = new int[TEAM_SIZE];
 			
-			match[0] = shooter + 1;
-			for(int i = 1; i < TEAM_SIZE; i++) {
-				match[i] = ((shooter + i) % TEAM_SIZE) + 1;
+			for(int i = 0; i < TEAM_SIZE; i++) {
+				int offPos = ((i + shooter) % TEAM_SIZE);
+				match[offPos] = i + 1;
 			}
 
 			logger.log("Picker: DefMatch: " + Arrays.toString(match) + " of " + whatTeam("defend"));
