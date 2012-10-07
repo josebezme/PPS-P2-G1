@@ -1,0 +1,103 @@
+java.util.HashSet;
+
+public static class RandomTeamPicker implements TeamPicker{
+		private int totalPlayers;
+		private int games;
+		private int turns;
+		private Set<Integer> used = new HashSet<Integer>(); 
+		private int[] teamA = new int[TEAM_SIZE];
+		private int[] teamB = new int[TEAM_SIZE];
+		private int[] shotsMade;
+		private int[] shotsTaken;
+		
+		private int pickingDefense; // Changes every turn.
+		//intitalize the total # of players, # of games, and # of turns per game
+		void initialize(int players, int games, int turns){
+			this.totalPlayers = players;
+			this.games = games;
+			this.turns = turns;
+		}
+
+		//Returns the array of teams
+		int[] pickTeam(){
+			//Randomly picks a team of TEAM_SIZE
+			int[] team = null;
+			
+			for(int i = 0; i < TEAM_SIZE, i++){
+				int player = -1;
+				do{
+					player = gen.nextInt(totalPlayers)+1; //because the player is NOT numbered by index
+				} while(used.contains(player))
+				if(player == -1 ) throw new Exception("A player not chosen!");
+				used.add(player);
+				team[i]=player;
+			} 
+
+			return team;
+		}
+
+		//Returns who will be the starting player of the game
+		int getBallHolder(){
+			pickingDefense = ++pickingDefense % 2;
+			int ballHolder = gen.nextInt(TEAM_SIZE) + 1;
+			logger.log("Picker: ballHolder : " + ballHolder);
+			return ballHolder;
+		}
+		
+		//Returns the Move object based on the defenders & lastMove
+		Move action(int[] defenders, Move lastMove){
+			Move move = null;	
+			int[] players = null;
+			if(pickingDefense == 0) {
+				players = teamB;
+			} else {
+				players = teamA;
+			}
+			
+			switch(lastMove.action) {
+				case START:
+					// do the pass.
+					int nextHolder = players[gen.nextInt(TEAM_SIZE)];
+					logger.log("Passing to " + nextHolder);
+					move = new Move(lastMove.ourPlayer, nextHolder, Status.PASSING);
+					break;
+				case PASSING:
+					// Shoot
+					logger.log("Shooting...");
+					move = new Move(lastMove.ourPlayer, 0, Status.SHOOTING);
+					break;
+				default:
+					throw new IllegalArgumentException("Invalid status: " + lastMove.action);
+				
+			}
+			
+			return move;
+		}
+
+		//Reports previous Rounds
+		void reportLastRound(Round previousRound){
+
+
+		}
+		
+		//Returns the array of defense matchup
+		int[] getDefenseMatch(){
+
+			int[] match = new int[TEAM_SIZE];
+			
+			for (int i=0; i < TEAM_SIZE; i++) {
+				match[i] = gen.nextInt(TEAM_SIZE) + 1;
+			}
+
+
+			logger.log("Picker: DefMatch: " + match)
+			return match;
+		}
+
+
+		//logger
+		void setLogger(Logger logger){
+			this.logger = logger;
+		}
+
+	}
