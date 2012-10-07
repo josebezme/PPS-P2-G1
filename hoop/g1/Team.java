@@ -3,7 +3,10 @@ package hoop.g1;
 import hoop.sim.Game.Round;
 import hoop.sim.Hoop;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.PriorityQueue;
 //here
 //Test Jiang
 import java.util.Random;
@@ -105,6 +108,7 @@ public class Team implements hoop.sim.Team, Logger {
 			if(!startedTournament) {
 				startedTournament = true;
 				log("STARTED_TOURN");
+				log("Shooters: "  + picker.getBestShooters());
 			}
 		}
 		
@@ -287,6 +291,8 @@ public class Team implements hoop.sim.Team, Logger {
 		//Returns who will be the starting player of the game
 		int getBallHolder();
 		
+		List<Integer> getBestShooters();
+		
 		//logger
 		void setLogger(Logger logger);
 	}
@@ -299,8 +305,11 @@ public class Team implements hoop.sim.Team, Logger {
 		private int firstPivot;
 		private int secondPivot;
 		
-		private int[][] shotsMade;
-		private int[][] shotsTaken;
+		private double[][] shotsMade;
+		private double[][] shotsTaken;
+		
+		private int[] totalShotsTaken = new int[2];
+		private int[] totalShotsMade = new int[2];
 		
 		private int[] teamA = new int[TEAM_SIZE];
 		private int[] teamB = new int[TEAM_SIZE];
@@ -314,7 +323,6 @@ public class Team implements hoop.sim.Team, Logger {
 		private int pickingDefense; // Changes every turn.
 		
 		private Logger logger = DEFAULT_LOGGER;
-		
 
 		@Override
 		public void initialize(int players, int games, int turns) {
@@ -322,8 +330,8 @@ public class Team implements hoop.sim.Team, Logger {
 			this.games = games;
 			this.turns = turns;
 
-			shotsMade = new int[2][players];
-			shotsTaken = new int[2][players];
+			shotsMade = new double[2][players];
+			shotsTaken = new double[2][players];
 			
 			firstPivot = gen.nextInt(players) + 1;
 			secondPivot = firstPivot;
@@ -437,7 +445,6 @@ public class Team implements hoop.sim.Team, Logger {
 				int[] offTeam = null;
 				int[] defTeam = null;
 				
-				
 				logger.log("AttakcsA: " + previousRound.attacksA);
 				if(!previousRound.attacksA) {
 					
@@ -464,22 +471,21 @@ public class Team implements hoop.sim.Team, Logger {
 				
 				int shooter = holders[holders.length - 1];
 				int playerId = offTeam[shooter -1];
+				int playerIndex = playerId - 1;
 				
 				switch(previousRound.lastAction()) {
 				
 					case SCORED:
-						shotsMade[pivot][playerId - 1]++;
+						shotsMade[pivot][playerIndex]++;
+						totalShotsMade[pivot]++;
 					case MISSED:
-						shotsTaken[pivot][playerId - 1]++;
+						shotsTaken[pivot][playerIndex]++;
+						totalShotsTaken[pivot]++;
 						break;
 					default:
 						// dont care.
 				}
 				
-				logger.log("Pivot 1: " + Arrays.toString(shotsMade[0]));
-				logger.log("Pivot 1: " + Arrays.toString(shotsTaken[0]));
-				logger.log("Pivot 2: " + Arrays.toString(shotsMade[1]));
-				logger.log("Pivot 2: " + Arrays.toString(shotsTaken[1]));
 			}
 		}
 
@@ -511,7 +517,103 @@ public class Team implements hoop.sim.Team, Logger {
 
 		}
 
+		@Override
+		public List<Integer> getBestShooters() {
+			
+			logger.log("Pivot 1: " + Arrays.toString(shotsMade[0]));
+			logger.log("Pivot 1: " + Arrays.toString(shotsTaken[0]));
+			logger.log("Pivot 2: " + Arrays.toString(shotsMade[1]));
+			logger.log("Pivot 2: " + Arrays.toString(shotsTaken[1]));
+			logger.log("Def1: " + ( 1.0 / (totalShotsMade[0] * 1.0 / totalShotsTaken[0])));
+			logger.log("Def2: " + ( 1.0 / (totalShotsMade[1] * 1.0 / totalShotsTaken[1])));
+			
+			PriorityQueue<Player> shooterQueue = new PriorityQueue<Player>(12);
+			
+			Player player = null;
+			
+			double averageWeight1 = 0;
+			double averageWeight2 = 0;
+			
+			double weight1;
+			double weight2;
+			for(int i = 0; i < totalPlayers; i++) {
+				int playerId = i + 1;
+				if(playerId == firstPivot || playerId == secondPivot) {
+					continue;
+				}
+				
+				player = new Player(playerId);
+				weight1 = 0;
+				weight2 = 0;
+				
+				if(shotsTaken[0][i] != 0) {
+					weight1 = shotsMade[0][i] / shotsTaken[0][i];
+				}
+				if(shotsTaken[1][i] != 0) {
+					weight2 = shotsMade[1][i] / shotsTaken[1][i];
+				}
+				
+				averageWeight1 += weight1;
+				averageWeight2 += weight2;
+				
+				player.weight = weight1 + weight2;
+				
+				logger.log("Player " + playerId + ": " + player.weight);
+				
+				shooterQueue.add(player);
+			}
+			
+			averageWeight1 /= 10;
+			averageWeight2 /= 10;
+			
+			// first pivot weight.
+			player = new Player(firstPivot);
+			weight1 = (shotsMade[1][firstPivot-1] / shotsTaken[1][firstPivot-1]);
+			weight2 = averageWeight2 * (weight1 / averageWeight1 );
+			
+			logger.log("weight1: " + weight1);
+			logger.log("weight2: " + weight2);
+			logger.log("weight: " + (weight1 + weight2));
+			player.weight = weight1 + weight2;
+			shooterQueue.add(player);
+			
+			player = new Player(secondPivot);
+			weight1 = (shotsMade[0][secondPivot-1] / shotsTaken[0][secondPivot-1]);
+			weight2 = averageWeight1 * (weight1 / averageWeight2 );
+			
+			logger.log("weight1: " + weight1);
+			logger.log("weight2: " + weight2);
+			logger.log("weight: " + (weight1 + weight2));
+			player.weight = weight1 + weight2;
+			shooterQueue.add(player);
+			
+			logger.log("average1: " + averageWeight1);
+			logger.log("average2: " + averageWeight2);
+			
+			List<Integer> shooters = new ArrayList<Integer>(12);
+			while(shooterQueue.size() > 0) {
+				shooters.add(shooterQueue.poll().playerId);
+			}
+			
+			return shooters;
+		}
 
+
+	}
+	
+	public static class Player implements Comparable<Player>{
+		public int playerId;
+		public double weight;
+		
+		public Player(int id) {
+			this.playerId = id;
+		}
+
+		@Override
+		public int compareTo(Player other) {
+			return 	(weight > other.weight) ? -1 :
+					(weight < other.weight) ?  1 : 0 ;
+		}
 	}
 
 
