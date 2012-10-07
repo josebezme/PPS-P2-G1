@@ -7,8 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-//here
-//Test Jiang
 import java.util.Random;
 
 public class Team implements hoop.sim.Team, Logger {
@@ -292,8 +290,9 @@ public class Team implements hoop.sim.Team, Logger {
 		private int[] totalShotsTaken = new int[2];
 		private int[] totalShotsMade = new int[2];
 		
-		private int[][] passMade;
-		private int[][] passTaken;
+		private double[][] passMade;
+		private double[][] passTaken;
+		
 		
 		private int[] teamA = new int[TEAM_SIZE];
 		private int[] teamB = new int[TEAM_SIZE];
@@ -317,8 +316,8 @@ public class Team implements hoop.sim.Team, Logger {
 			shotsMade = new double[2][players];
 			shotsTaken = new double[2][players];
 			
-			passMade = new int[2][players];
-			passTaken = new int[2][players];
+			passMade = new double[2][players];
+			passTaken = new double[2][players];
 			
 			firstPivot = gen.nextInt(players) + 1;
 			secondPivot = firstPivot;
@@ -386,6 +385,7 @@ public class Team implements hoop.sim.Team, Logger {
 			pickingDefense = ++pickingDefense % 2;
 			
 			int ballHolder = ((shooter + 1) % TEAM_SIZE) + 1;
+			System.out.println("***************************************ballholder:   "+ballHolder);
 			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder);
 			return ballHolder;
 		}
