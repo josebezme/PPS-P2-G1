@@ -7,8 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.PriorityQueue;
-//here
-//Test Jiang
+
 import java.util.Random;
 
 public class Team implements hoop.sim.Team, Logger {
@@ -394,7 +393,7 @@ public class Team implements hoop.sim.Team, Logger {
 		@Override
 		public int getBallHolder() {
 			if(changeShooter == 0) {
-				shooter = ++shooter % TEAM_SIZE;
+				shooter = ++shooter % TEAM_SIZE; //shooter variabl is an index !!!!
 			}
 			changeShooter = ++changeShooter % 2;
 			
@@ -405,10 +404,11 @@ public class Team implements hoop.sim.Team, Logger {
 				players = teamB;
 			}
 			pickingDefense = ++pickingDefense % 2;
-			
+
+
 			int ballHolder = ((shooter + 1) % TEAM_SIZE) + 1;
 			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder);
-			return ballHolder;
+			return ballHolder; //we return the position of ball holder here [simulation #]
 		}
 		
 		@Override
