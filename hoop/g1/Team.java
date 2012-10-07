@@ -283,6 +283,9 @@ public class Team implements hoop.sim.Team, Logger {
 		private int[][] shotsMade;
 		private int[][] shotsTaken;
 		
+		private int[][] passMade;
+		private int[][] passTaken;
+		
 		private int[] teamA = new int[TEAM_SIZE];
 		private int[] teamB = new int[TEAM_SIZE];
 		
@@ -305,6 +308,9 @@ public class Team implements hoop.sim.Team, Logger {
 
 			shotsMade = new int[2][players];
 			shotsTaken = new int[2][players];
+			
+			passMade = new int[2][players];
+			passTaken = new int[2][players];
 			
 			firstPivot = gen.nextInt(players) + 1;
 			secondPivot = firstPivot;
@@ -386,6 +392,12 @@ public class Team implements hoop.sim.Team, Logger {
 			} else {
 				players = teamA;
 			}
+				
+			int pivot=0;
+			if(whatTeam("attack").equals("Team A"))
+				pivot=1;
+			else
+				pivot=0;
 			
 			switch(lastMove.action) {
 				case START:
@@ -393,11 +405,15 @@ public class Team implements hoop.sim.Team, Logger {
 					int nextHolder = shooter + 1;
 					logger.log(whatTeam("attack") + ": Passing to --> playerID " + players[shooter] + " ( [Sim#]: " + nextHolder + ") ");
 					move = new Move(lastMove.ourPlayer, nextHolder, Status.PASSING);
+					//Log the pass -Jiang
+					passTaken[pivot][players[lastMove.ourPlayer-1]-1]++;
 					break;
 				case PASSING:
 					// Shoot
 					logger.log("Shooting..." + " from " + whatTeam("attack"));
 					move = new Move(lastMove.ourPlayer, 0, Status.SHOOTING);
+					//Log the pass -Jiang
+					passMade[pivot][players[lastMove.ourPlayer-1]-1]++;
 					break;
 				default:
 					throw new IllegalArgumentException("Invalid status: " + lastMove.action);
@@ -439,10 +455,12 @@ public class Team implements hoop.sim.Team, Logger {
 				// last action?
 				
 				int holders[] = previousRound.holders();
-				logger.log("holders array: " + holders);
+				logger.log("holders array: " + Arrays.toString(holders));
 				
 				int shooter = holders[holders.length - 1];
 				int playerId = offTeam[shooter -1];
+				int passer=holders[0];
+				int passerPlayerId=offTeam[passer - 1];
 				
 				switch(previousRound.lastAction()) {
 				
@@ -459,6 +477,11 @@ public class Team implements hoop.sim.Team, Logger {
 				logger.log("Pivot 1: " + Arrays.toString(shotsTaken[0]));
 				logger.log("Pivot 2: " + Arrays.toString(shotsMade[1]));
 				logger.log("Pivot 2: " + Arrays.toString(shotsTaken[1]));
+				
+				logger.log("Passing Succeed Team A: " + Arrays.toString(passMade[1]));
+				logger.log("Passing Attempt Team A: " + Arrays.toString(passTaken[1]));
+				logger.log("Passing Succeed Team B: " + Arrays.toString(passMade[0]));
+				logger.log("Passing Attempt Team B: " + Arrays.toString(passTaken[0]));
 			}
 		}
 
