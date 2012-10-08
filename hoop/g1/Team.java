@@ -63,6 +63,10 @@ public class Team implements hoop.sim.Team, Logger {
 	
 	private Player[] opponents = new Player[TEAM_SIZE];
 
+	private List<Integer> bestShooters;
+
+	private List<Integer> bestPassers;
+
 	private static boolean in(int[] a, int n, int x)
 	{
 		for (int i = 0 ; i != n ; ++i)
@@ -111,9 +115,13 @@ public class Team implements hoop.sim.Team, Logger {
 			currentPerspective = (currentPerspective + 1) % 2;
 		} else {
 			if(!startedTournament) {
+				// Everything in here happens once per tournament.
 				startedTournament = true;
 				log("STARTED_TOURN");
-				log("Shooters: "  + picker.getBestShooters());
+				bestShooters = picker.getBestShooters();
+				bestPassers = picker.getBestPassers();
+				log("Shooters: "  + bestShooters);
+				log("Passers: " + bestPassers);
 			}
 			
 			teamStats = allTeamStats.get(opponent);
@@ -134,14 +142,46 @@ public class Team implements hoop.sim.Team, Logger {
 		// First initialize the scores.
 		game.ourScore = -1;
 		game.theirScore = 0;
-		
-		if(picker == null) {
-			picker = new PivotTeamPicker();
-			picker.initialize(totalPlayers, 10, Hoop.gameTurns());
-			picker.setLogger(this);
+		if(game.selfGame) {
+			if(picker == null) {
+				picker = new PivotTeamPicker();
+				picker.initialize(totalPlayers, 10, Hoop.gameTurns());
+				picker.setLogger(this);
+			}
+			
+			return picker.pickTeam();
+			
+		} else {
+			
+			
+			int[] team = new int[5];
+			// Pick 2 shooters.
+			team[0] = bestShooters.get(0);
+			team[1] = bestShooters.get(1);
+			
+			List<Integer> already = new ArrayList<Integer>(4);
+			already.add(team[0]);
+			already.add(team[1]);
+			
+			// Pick 3 passers;.
+			int pos = 0;
+			for(int i = 2; i < 5; i++) {
+				
+				// select random int (+1) 
+				// if already contains (already assigned to position) that pos
+				// then randomly get again.
+				while(already.contains(pos = gen.nextInt(totalPlayers) + 1)) {
+				}
+				
+				team[i] = pos;
+				already.add(pos);
+			}
+			
+			log("Choosing team: " + Arrays.toString(team));
+			
+			return team;
+			
 		}
-		
-		return picker.pickTeam();
 	}
 
 	@Override
@@ -204,7 +244,8 @@ public class Team implements hoop.sim.Team, Logger {
 		if(game.selfGame) {
 			holder =  picker.getBallHolder();
 		} else {
-			holder = gen.nextInt(5) + 1;
+			// Pick pos 3-5
+			holder = gen.nextInt(3) + 3;
 		}
 		
 		// Set status to holding until action.
@@ -243,7 +284,7 @@ public class Team implements hoop.sim.Team, Logger {
 				
 				int newHolder = holder;
 				while (newHolder == holder)
-					newHolder = gen.nextInt(5) + 1;
+					newHolder = gen.nextInt(2) + 1;
 				holder = newHolder;
 				
 				attackingGame.lastMove = new Move(oldHolder, newHolder, Status.PASSING);
@@ -647,7 +688,11 @@ public class Team implements hoop.sim.Team, Logger {
 		
 		@Override
 		public List<Integer> getBestPassers() {
-			return Arrays.asList(1,2,3,4,5);
+			List<Integer> players = new ArrayList<Integer>(totalPlayers);
+			for(int i = 0; i < totalPlayers; i++) {
+				players.add(i + 1);
+			}
+			return players;
 		}
 	}
 	
