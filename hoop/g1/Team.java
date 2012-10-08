@@ -20,7 +20,7 @@ public class Team implements hoop.sim.Team, Logger {
 	private static final boolean DEBUG = true;
 	private static final int TEAM_SIZE = 5;
 	
-	private static boolean startedTournament;
+	private boolean startedTournament;
 
 	private static double[][] ourStats;
 	
