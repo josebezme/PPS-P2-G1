@@ -5,7 +5,9 @@ import hoop.sim.Hoop;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 //here
 //Test Jiang
@@ -49,6 +51,17 @@ public class Team implements hoop.sim.Team, Logger {
 	private Game[] games = new Game[2];
 
 	private Game attackingGame;
+	
+	private Map<String, StatWrapper> allTeamStats = new HashMap<String, StatWrapper>();
+	private StatWrapper teamStats;
+	
+	public static class StatWrapper {
+		List<Player> playerObjects = new ArrayList<Player>();
+		PriorityQueue<Player> favoriteShooters = new PriorityQueue<Player>();
+		PriorityQueue<Player> favoritePassers = new PriorityQueue<Player>();
+	}
+	
+	private Player[] opponents = new Player[TEAM_SIZE];
 
 	private static boolean in(int[] a, int n, int x)
 	{
@@ -72,6 +85,14 @@ public class Team implements hoop.sim.Team, Logger {
 		log("Called opponentTeam()");
 		// We're told what players were picked to play us. 123
 		// Keep track of these players for the game Jose & Jiang & Albert
+		if(game.selfGame) {
+			return;
+		}
+		
+		
+		for(int i = 0; i < TEAM_SIZE; i++) {
+			opponents[i] = teamStats.playerObjects.get(opponentPlayers[i] - 1);
+		}
 	}
 
 	@Override
@@ -93,6 +114,20 @@ public class Team implements hoop.sim.Team, Logger {
 				startedTournament = true;
 				log("STARTED_TOURN");
 				log("Shooters: "  + picker.getBestShooters());
+			}
+			
+			teamStats = allTeamStats.get(opponent);
+			
+			if(teamStats == null) {
+				teamStats = new StatWrapper();
+				
+				Player p;
+				for(int i = 0; i < totalPlayers; i++) {
+					p = new Player(i + 1);
+					teamStats.playerObjects.add(p);
+					teamStats.favoritePassers.add(p);
+					teamStats.favoriteShooters.add(p);
+				}
 			}
 		}
 		
@@ -132,6 +167,38 @@ public class Team implements hoop.sim.Team, Logger {
 		} else {
 			game.theirScore = opponentScore;
 			// They made their shot.
+		}
+		
+		if(previousRound != null && !game.selfGame) {
+			int[] holders = previousRound.holders();
+			int lastPasser = holders.length - 1;
+			int position = 0;
+			switch(previousRound.lastAction()) {
+			case MISSED:
+			case SCORED:
+				position = holders[holders.length - 1];
+				Player shooter = opponents[position - 1]; // it's their index + 1
+				shooter.weight++;
+				teamStats.favoriteShooters.remove(shooter);
+				teamStats.favoriteShooters.add(shooter);
+				
+				lastPasser--;
+				
+				// Continue to next case to do passers.
+			case STOLEN:
+				Player passer;
+				for(int i = 0; i < lastPasser; i++) {
+					position = holders[i];
+					passer = opponents[position - 1]; // it's their index + 1
+					passer.weight++;
+					teamStats.favoritePassers.remove(passer);
+					teamStats.favoritePassers.add(passer);
+				}
+				break;
+			default:
+				break;
+				
+			}
 		}
 		
 		if(game.selfGame) {
@@ -273,6 +340,7 @@ public class Team implements hoop.sim.Team, Logger {
 		int getBallHolder();
 		
 		List<Integer> getBestShooters();
+		List<Integer> getBestPassers();
 		
 		//logger
 		void setLogger(Logger logger);
@@ -576,8 +644,11 @@ public class Team implements hoop.sim.Team, Logger {
 			
 			return shooters;
 		}
-
-
+		
+		@Override
+		public List<Integer> getBestPassers() {
+			return Arrays.asList(1,2,3,4,5);
+		}
 	}
 	
 	public static class Player implements Comparable<Player>{
