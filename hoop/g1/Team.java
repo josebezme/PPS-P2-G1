@@ -178,23 +178,9 @@ public class Team implements hoop.sim.Team, Logger {
 			team[0] = bestShooters.get(0);
 			team[1] = bestShooters.get(1);
 			
-			List<Integer> already = new ArrayList<Integer>(4);
-			already.add(team[0]);
-			already.add(team[1]);
-			
-			// Pick 3 passers;.
-			int pos = 0;
-			for(int i = 2; i < 5; i++) {
-				
-				// select random int (+1) 
-				// if already contains (already assigned to position) that pos
-				// then randomly get again.
-				while(already.contains(pos = gen.nextInt(totalPlayers) + 1)) {
-				}
-				
-				team[i] = pos;
-				already.add(pos);
-			}
+			team[2] = bestPassers.get(0);
+			team[3] = bestPassers.get(1);
+			team[4] = bestPassers.get(2);
 			
 			log("Choosing team: " + Arrays.toString(team));
 			
