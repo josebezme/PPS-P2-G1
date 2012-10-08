@@ -55,7 +55,7 @@ public class Hoop {
 				List <File> javaFiles = directoryFiles("hoop/" + group, ".java");
 				System.err.print("Compiling " + javaFiles.size() + " source files...   ");
 				Iterable<? extends JavaFileObject> units = fileManager.getJavaFileObjectsFromFiles(javaFiles);
-				boolean ok = compiler.getTask(null, fileManager, null, null, null, units).call();
+				boolean ok = compiler.getTask(null, fileManager, null,  Arrays.asList("-g"), null, units).call();
 				if (!ok) throw new Exception("compile error");
 				System.err.println("OK");
 				// load class
