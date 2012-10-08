@@ -79,7 +79,7 @@ public class TweakedHoop {
 
 	public static void main(String[] args) throws Exception
 	{
-		boolean display = true;
+		boolean display = false;
 		// path with players
 		String playerPath = "hoop/players.list";
 		if (args.length > 0)
@@ -122,25 +122,6 @@ public class TweakedHoop {
 		}
 		stats = stats(gen, teams.length, playerPool);
 
-		// for (int i=0; i < stats.length; i++) {
-		// 	System.out.println("Team [" + i + "]");
-		// 	System.out.println("---> ");
-		// 	System.out.println("player\tshoot\tdefense\tpass\tintercept");
-		// 	for (int j=0; j < stats[0].length; j++) {
-		// 		// System.out.print("--> Player [" + j + "] : ");
-		// 		System.out.print(j + "\t");
-				
-		// 		for (int k=0;k < stats[0][0].length; k++ ) {
-		// 			System.out.printf("%.3f\t", stats[i][j][k]);
-		// 		}
-		// 		System.out.println();
-				
-				
-		// 	}
-			
-		// }
-		
-		// System.exit(-1);
 		// history of self games
 		Game[][] selfResults = new Game [teams.length][selfGames];
 		// play training games
@@ -160,14 +141,16 @@ public class TweakedHoop {
 			}
 		}
 		// display training games result
-		System.err.println("\n### Training results ###");
-		for (int team = 0 ; team != teams.length ; ++team) {
-			System.err.println("  Team: " + teams[team].name());
-			for (int game = 0 ; game != selfGames ; ++game) {
-				Game result = selfResults[team][game];
-				System.err.println("    " + result.scoreA + "-" + result.scoreB);
-			}
-		}
+		
+		// System.err.println("\n### Training results ###");
+		// for (int team = 0 ; team != teams.length ; ++team) {
+		// 	System.err.println("  Team: " + teams[team].name());
+		// 	for (int game = 0 ; game != selfGames ; ++game) {
+		// 		Game result = selfResults[team][game];
+		// 		System.err.println("    " + result.scoreA + "-" + result.scoreB);
+		// 	}
+		// }
+
 		// no tournament if only one player
 		if (teams.length == 1)
 			System.exit(0);
@@ -181,6 +164,48 @@ public class TweakedHoop {
 		    new Vector <Iterable <Iterable <Pairs.Pair>>> ();
 		for (int season = 0 ; season != seasons ; ++season)
 			schedule.add(new Pairs(teams.length));
+
+
+
+		System.out.println("------------CHEAT KEY BEGINS ------------------");
+
+
+		for (int t=0; t < stats.length; t++) {
+			int bestShooterNumber=-1;
+			double bestShooterStat=-1;
+			int bestPasserNumber=-1;
+			double bestPasserStat=-1;
+			System.out.println("Team [" + t + "]");
+			System.out.println("---> ");
+			System.out.println("player\tshoot\tdefense\tpass\tintercept");
+			for (int p=0; p < stats[0].length; p++) {
+				// System.out.print("--> Player [" + p + "] : ");
+				System.out.print(p+1 + "\t");	
+				for (int s=0;s < stats[0][0].length; s++ ) {
+					System.out.printf("%.3f\t", stats[t][p][s]);
+					if (s == 0 && bestShooterStat < stats[t][p][0]) {
+						bestShooterStat = stats[t][p][0];
+						bestShooterNumber = p+1;
+					}
+					if(s == 2 && bestPasserStat < stats[t][p][2]){
+						bestPasserStat = stats[t][p][2];
+						bestPasserNumber = p+1;
+					}
+				}
+				System.out.println();
+				
+				
+			}
+			System.out.println("bestShooter is : " + bestShooterNumber);
+			System.out.println("bestPasser is : " + bestPasserNumber);
+			System.out.println("=====================");
+			
+		}
+		System.out.println("------------CHEAT KEY ENDS ------------------");
+		
+
+
+
 		System.err.println("\n### Tournament schedule ###");
 		int seasonNum = 1;
 		for (Iterable <Iterable <Pairs.Pair>> season : schedule) {
@@ -201,8 +226,11 @@ public class TweakedHoop {
 		int[] points = new int [teams.length];
 		Arrays.fill(points, 0);
 		// play tournament games
+
 		if (display)
 			System.err.println("\n### Tournament games ###");
+
+
 		int rounds = teams.length - 1 + (teams.length % 2);
 		int per_round = teams.length / 2;
 		int score[][][][] = new int [seasons][rounds][per_round][2];
