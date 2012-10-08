@@ -788,11 +788,11 @@ public class Team implements hoop.sim.Team, Logger {
 
 			}
 
-			System.out.println("totalPassMade1: " + totalPassMade1);
-			System.out.println("totalPassTaken1: " + totalPassTaken1);
+			logger.log("totalPassMade1: " + totalPassMade1);
+			logger.log("totalPassTaken1: " + totalPassTaken1);
 
-			System.out.println("totalPassMade2: " + totalPassMade2);
-			System.out.println("totalPassTaken2: " + totalPassTaken2);
+			logger.log("totalPassMade2: " + totalPassMade2);
+			logger.log("totalPassTaken2: " + totalPassTaken2);
 			
 			double block1Factor = ( (double) totalPassTaken1 ) / ((double) totalPassMade1) ;
 			double block2Factor = ( (double) totalPassTaken2 ) / ((double) totalPassMade2) ;
@@ -843,10 +843,10 @@ public class Team implements hoop.sim.Team, Logger {
 			// first pivot weight.
 			// PIVOT1 and PIVOT 2 have to be 
 			player = new Player(firstPivot);
-			System.out.println(passMade[0][firstPivot-1]);
-			System.out.println(passTaken[0][firstPivot-1]);
-			System.out.println(Arrays.toString(passMade[0]));
-			System.out.println(Arrays.toString(passMade[1]));
+			logger.log("" + passMade[0][firstPivot-1]);
+			logger.log("" + passTaken[0][firstPivot-1]);
+			logger.log("" + Arrays.toString(passMade[0]));
+			logger.log("" + Arrays.toString(passMade[1]));
 			
 			
 			weight1 = (passMade[0][firstPivot-1] / passTaken[0][firstPivot-1]);
