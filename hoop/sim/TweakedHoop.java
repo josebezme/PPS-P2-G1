@@ -174,7 +174,7 @@ public class TweakedHoop {
 			int bestShooterNumber=-1;
 			double bestShooterStat=-1;
 			int bestPasserNumber=-1;
-			double bestPasserStat=-1;
+			double bestPasserStat=Integer.MAX_VALUE;
 			System.out.println("Team [" + t + "]");
 			System.out.println("---> ");
 			System.out.println("player\tshoot\tdefense\tpass\tintercept");
@@ -187,7 +187,7 @@ public class TweakedHoop {
 						bestShooterStat = stats[t][p][0];
 						bestShooterNumber = p+1;
 					}
-					if(s == 2 && bestPasserStat < stats[t][p][2]){
+					if(s == 2 && bestPasserStat > stats[t][p][2]){
 						bestPasserStat = stats[t][p][2];
 						bestPasserNumber = p+1;
 					}
