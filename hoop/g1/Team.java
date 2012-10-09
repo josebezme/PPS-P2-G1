@@ -43,11 +43,12 @@ public class Team implements hoop.sim.Team, Logger {
 	}
 
 	private final int version = ++versions;
-	private int holder = 0;
-	private TeamPicker picker;
 
+	private int holder = 0; //this variable will store our first passer
+	private int[] currentPlayingTeam;
+
+	private TeamPicker picker;
 	private Game game;
-	
 	private int currentPerspective;
 	private Game[] games = new Game[2];
 
@@ -55,7 +56,7 @@ public class Team implements hoop.sim.Team, Logger {
 	
 	private Map<String, StatWrapper> allTeamStats = new HashMap<String, StatWrapper>();
 	private StatWrapper teamStats;
-	private static ArrayList<Player> ourTeamStat;
+	private static List<Player> ourTeamStat;
 
 	public static class StatWrapper {
 		String teamName = new String();
@@ -187,8 +188,13 @@ public class Team implements hoop.sim.Team, Logger {
 			
 		} else {
 			
-			
+			ourTeamStat = picker.getPlayerStat();
+			// for (Player p : ourTeamStat){
+			// 	log("Player Number : " + p.playerId);
+			// }
+
 			int[] team = new int[5];
+			currentPlayingTeam = team;
 			// Pick 2 shooters.
 			team[0] = bestShooters.get(0);
 			team[1] = bestShooters.get(1);
@@ -311,7 +317,7 @@ public class Team implements hoop.sim.Team, Logger {
 		// Set status to holding until action.
 		game.lastMove = new Move(holder, 0, Status.START);
 		
-
+		log("holder in pickAttack() is : " + holder);
 		return holder;
 	}
 
@@ -390,16 +396,16 @@ public class Team implements hoop.sim.Team, Logger {
 			// so either pass is blocked
 			// or shot failed.
 			
-		//TRY TO GET THE SENSE OF previous Round
-			log("lastRound: " + previousRound);
+	// //TRY TO GET THE SENSE OF previous Round
+		// 	log("lastRound: " + previousRound);
 
-			int[] prevRoundDef=previousRound.defenders();
-			int[] prevRoundHol=previousRound.holders();
-			for (int p : prevRoundDef) {
-				log("Previous Round Defender:" + p);
-			}
+		// 	int[] prevRoundDef=previousRound.defenders();
+		// 	int[] prevRoundHol=previousRound.holders();
+		// 	for (int p : prevRoundDef) {
+		// 		log("Previous Round Defender:" + p);
+		// 	}
 
-		//TRY TO GET THE SENSE OF previous Round ENDS
+	//TRY TO GET THE SENSE OF previous Round ENDS
 	
 		//Maybe depreciated
 		// switch(game.lastMove.action) {
@@ -418,20 +424,41 @@ public class Team implements hoop.sim.Team, Logger {
 		// 			throw new IllegalArgumentException("Illegal status for defend:" + game.lastMove.action);
 		// 	}
 
+		if(!game.selfGame) //we only do this when playing with others
+		{
+			int lastPlayerNumber = currentPlayingTeam[holder-1];
+			Player lastBallHolder= ourTeamStat.get(lastPlayerNumber-1);
+			log("holder: " + holder);
+			log("currentPlayingTeam[holder-1]: " + currentPlayingTeam[holder-1]);
+			log("last Shooter Player Id: " + lastBallHolder);
 
-		switch(previousRound.lastAction()) {
-			case MISSED:
-		
-				break;
-			case SCORED:
+			//Assume it's a passer and reject that if shooter in the case
+			lastBallHolder.passAttempted();
+			lastBallHolder.passMade();
 
-				break;
-			case STOLEN:
-				break;
-			default:
-				log("START OF THE GAME?");
-				break;
-				
+			switch(previousRound.lastAction()) {
+				case MISSED:
+					//was shooter
+					lastBallHolder.passAttemptedNullify();
+					lastBallHolder.passFailed();
+
+					lastBallHolder.shotAttempted();
+					break;
+				case SCORED:
+					lastBallHolder.passAttemptedNullify();
+					lastBallHolder.passFailed();
+					
+					lastBallHolder.shotAttempted();
+					lastBallHolder.shotMade();
+					break;
+				case STOLEN:
+					lastBallHolder.passFailed();
+					break;
+				default:
+					log("START OF THE GAME?");
+					break;
+					
+			}
 		}
 
 			
@@ -484,6 +511,9 @@ public class Team implements hoop.sim.Team, Logger {
 
 		//Returns the list of best Interceptor
 		List<Integer> getBestInterceptor();
+
+		//Returns the list of player stats
+		public List<Player> getPlayerStat();
 
 		//Returns the extra Infomariton
 		void printExtraInfo();
@@ -562,8 +592,7 @@ public class Team implements hoop.sim.Team, Logger {
 				currentPlayer++;
 			}
 
-			//initialize our team stat 
-			ourTeamStat = new ArrayList<Player>();
+
 		}
 
 		@Override
@@ -983,25 +1012,46 @@ public class Team implements hoop.sim.Team, Logger {
 			return interceptor; 
 
 		}
+
+		@Override
+		public List<Player> getPlayerStat(){
+			//initialize our team stat 
+			ArrayList<Player> theTeamStat = new ArrayList<Player>();
+			for(int p=0; p < totalPlayers; p++){
+				Player player = new Player(p+1,"our team");
+				
+				for(int numPivot=0; numPivot<2; numPivot++){
+					player.numShotAttempted=shotsTaken[numPivot][p];
+					player.numShotMade=shotsMade[numPivot][p];
+					player.numPassAttempted=passTaken[numPivot][p];
+					player.numPassMade=passMade[numPivot][p];
+				}
+				theTeamStat.add(p,player);
+			}
+			return theTeamStat;
+		}
+
+
 	}
 	
 	public static class Player implements Comparable<Player>{
 		public int playerId;
+		public String team;
 		public double weight;
 		
 		// Players ability
 		// 1. Shooting ability
-		public int numShotMade;
-		public int numShotAttempted;
+		public double numShotMade;
+		public double numShotAttempted;
 		// 2 .Blocking ability
-		public int numBlockMade;
-		public int numBlockAttempted;
+		public double numBlockMade;
+		public double numBlockAttempted;
 		// 3. Passing ability
-		public int numPassMade;
-		public int numPassAttempted;
+		public double numPassMade;
+		public double numPassAttempted;
 		// 4. Intercepting ability
-		public int numInterceptMade; 
-		public int numInterceptAttempted; 
+		public double numInterceptMade; 
+		public double numInterceptAttempted; 
 		
 		public Player(int id) {
 			this.playerId = id;
@@ -1013,6 +1063,19 @@ public class Team implements hoop.sim.Team, Logger {
 			numPassAttempted=0;
 			numInterceptMade=0;
 			numInterceptAttempted=0;
+			this.team="unknown";
+		}
+		public Player(int id, String team) {
+			this.playerId = id;
+			numShotMade=0;
+			numShotAttempted=0;
+			numBlockMade=0;
+			numBlockAttempted=0;
+			numPassMade=0;
+			numPassAttempted=0;
+			numInterceptMade=0;
+			numInterceptAttempted=0;
+			this.team=team;
 		}
 
 		@Override
@@ -1022,7 +1085,7 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 
 		public String toString(){
-			return "Player #: " + Integer.toString(playerId);
+			return "Player #: " + Integer.toString(playerId) + " from team [" + team +"]";
 			
 		}
 
@@ -1039,6 +1102,7 @@ public class Team implements hoop.sim.Team, Logger {
 		public void interceptMade(){numInterceptMade++;}
 		public void interceptAttempted(){numInterceptAttempted++;}
 		public void interceptFailed(){numInterceptMade--;}
+		public void passAttemptedNullify(){numPassAttempted--;}
 	}
 
 
