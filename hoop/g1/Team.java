@@ -55,14 +55,17 @@ public class Team implements hoop.sim.Team, Logger {
 	
 	private Map<String, StatWrapper> allTeamStats = new HashMap<String, StatWrapper>();
 	private StatWrapper teamStats;
-	
+	private static ArrayList<Player> ourTeamStat;
+
 	public static class StatWrapper {
+		String teamName = new String();
 		List<Player> playerObjects = new ArrayList<Player>();
 		PriorityQueue<Player> favoriteShooters = new PriorityQueue<Player>();
 		PriorityQueue<Player> favoritePassers = new PriorityQueue<Player>();
+
 	}
-	
-	private Player[] opponents = new Player[TEAM_SIZE];
+	//This array changes based on what team we play against
+	private Player[] opponents = new Player[TEAM_SIZE]; 
 
 	private List<Integer> bestShooters;
 
@@ -96,12 +99,19 @@ public class Team implements hoop.sim.Team, Logger {
 		
 		
 		for(int i = 0; i < TEAM_SIZE; i++) {
+			//intilize the opponents(array of Players bojects)
 			opponents[i] = teamStats.playerObjects.get(opponentPlayers[i] - 1);
+			log("OPPOSITE TEAM: " + opponentPlayers[i]);
+			log(opponents[i].toString());
+			
 		}
+		log("----------------- opponentTeam()ENDS----------------");
 	}
 
 	@Override
 	public int[] pickTeam(String opponent, int totalPlayers, hoop.sim.Game[] history) {
+		
+		log("------------ pickTeam() call STARTS HERE---------");
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
 		// Here we find out how many players we have for the game.
 		
@@ -135,23 +145,28 @@ public class Team implements hoop.sim.Team, Logger {
 				bestShooters = picker.getBestShooters();
 				bestPassers = picker.getBestPassers();
 			}
-			
+			//Load up the teamsat for a particular team
 			teamStats = allTeamStats.get(opponent);
+			// teamStats.teamName = opponent;
+			log(opponent);
+
 			
+			//if the stat is not found, make one for that team
 			if(teamStats == null) {
 				teamStats = new StatWrapper();
 				
 				Player p;
+				//intilize the teams stat for that team
 				for(int i = 0; i < totalPlayers; i++) {
 					p = new Player(i + 1);
-					teamStats.playerObjects.add(p);
+					teamStats.playerObjects.add(p); 
 					teamStats.favoritePassers.add(p);
 					teamStats.favoriteShooters.add(p);
 				}
 			}
 			
 			log("ESTIMATION BASED ON TWO PIVOTS: ");
-			picker.printExtraInfo();
+			// picker.printExtraInfo();
 			log("Shooters: "  + bestShooters);
 			log("------------Passer INFO STARTS HERE-----------");
 			log("Passers: " +  bestPassers);
@@ -198,7 +213,7 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 			
 			log("Choosing team: " + Arrays.toString(team));
-			
+			log("------------ pickTeam() call ENDS HERE---------");
 			return team;
 			
 		}
@@ -213,7 +228,7 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 		
 		log("Called pickAttack()");
-		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
+		log("yourScore: " + opponentScore+ " ourScore: " + yourScore);
 		if(game.selfGame) {
 			game = games[currentPerspective];
 			attackingGame = game;
@@ -226,29 +241,51 @@ public class Team implements hoop.sim.Team, Logger {
 		} else if (game.theirScore == opponentScore) {
 			// They failed to make their shot.
 			// Or their pass was blocked.
+			// case 1: their shot is miseed
+			// Based on the previous round, store this knowledge about the player whose shot is missed
+			// player.shotAttempted();
+			// Case 2: their pass was blocked
+			// If so, get the whoever tried to pass, and 
+			// player.passAttempted();
 		} else {
 			game.theirScore = opponentScore;
 			// They made their shot.
+			//player.shotMade();
 		}
 		
 		if(previousRound != null && !game.selfGame) {
 			int[] holders = previousRound.holders();
 			int lastPasser = holders.length - 1;
 			int position = 0;
+			position = holders[holders.length - 1];
+			Player shooter = opponents[position - 1]; // it's their index + 1
+			Player passer = opponents[lastPasser];
+			
+			// Assume the ideal scenario and penalize in the case
+			passer.passAttempted();
+			passer.passMade();
+			
 			switch(previousRound.lastAction()) {
 			case MISSED:
+				shooter.shotAttempted();
+				log("shot was missed by: " + shooter + " from team: " + teamStats);
+				break;
 			case SCORED:
-				position = holders[holders.length - 1];
-				Player shooter = opponents[position - 1]; // it's their index + 1
+				shooter.shotAttempted();
+				shooter.shotMade();
+
 				shooter.weight++;
 				teamStats.favoriteShooters.remove(shooter);
 				teamStats.favoriteShooters.add(shooter);
 				
 				lastPasser--;
-				
+
+				log("shot was made by: " + shooter + " from team: " + teamStats);
 				// Continue to next case to do passers.
+				break;
 			case STOLEN:
-				Player passer;
+				passer.passFailed();
+				log("pass is stolen from " + passer);
 				for(int i = 0; i < lastPasser; i++) {
 					position = holders[i];
 					passer = opponents[position - 1]; // it's their index + 1
@@ -258,6 +295,7 @@ public class Team implements hoop.sim.Team, Logger {
 				}
 				break;
 			default:
+				log("START OF THE GAME?");
 				break;
 				
 			}
@@ -273,6 +311,7 @@ public class Team implements hoop.sim.Team, Logger {
 		// Set status to holding until action.
 		game.lastMove = new Move(holder, 0, Status.START);
 		
+
 		return holder;
 	}
 
@@ -334,12 +373,16 @@ public class Team implements hoop.sim.Team, Logger {
 	@Override
 	public int[] pickDefend(int yourScore, int opponentScore, int ballHolder, Round previousRound) {
 		log("Called pickDefend()");
-		log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
+	
+
+		// log("yourScore: " + yourScore + " ourScore: " + game.ourScore);
 		if(game.selfGame) {
 			log("Current perspective: " + currentPerspective);
 			game = games[currentPerspective];
 		}
-		
+		else{	
+		log("our score: " + yourScore + " opponent score:" + opponentScore);
+		}
 		if(game.ourScore == -1) {
 			// This is the first turn.
 			game.ourScore = 0;
@@ -347,20 +390,50 @@ public class Team implements hoop.sim.Team, Logger {
 			// so either pass is blocked
 			// or shot failed.
 			
-			switch(game.lastMove.action) {
-				case PASSING:
-					// pass was blocked.
-					break;
-				case SHOOTING:
-					// shot was blocked.
-					// shot as blocked by:
-					// lastMove.theirPlayer;
-					// log that their player has the ability
-					// to block our shooter.
-					break;
-				default:
-					throw new IllegalArgumentException("Illegal status for defend:" + game.lastMove.action);
+		//TRY TO GET THE SENSE OF previous Round
+			log("lastRound: " + previousRound);
+
+			int[] prevRoundDef=previousRound.defenders();
+			int[] prevRoundHol=previousRound.holders();
+			for (int p : prevRoundDef) {
+				log("Previous Round Defender:" + p);
 			}
+
+		//TRY TO GET THE SENSE OF previous Round ENDS
+	
+		//Maybe depreciated
+		// switch(game.lastMove.action) {
+		// 		case PASSING:
+		// 			// pass was blocked.
+
+		// 			break;
+		// 		case SHOOTING:
+		// 			// shot was blocked.
+		// 			// shot as blocked by:
+		// 			// lastMove.theirPlayer;
+		// 			// log that their player has the ability
+		// 			// to block our shooter.
+		// 			break;
+		// 		default:
+		// 			throw new IllegalArgumentException("Illegal status for defend:" + game.lastMove.action);
+		// 	}
+
+
+		switch(previousRound.lastAction()) {
+			case MISSED:
+		
+				break;
+			case SCORED:
+
+				break;
+			case STOLEN:
+				break;
+			default:
+				log("START OF THE GAME?");
+				break;
+				
+		}
+
 			
 		} else {
 			// supposedly can only go up.
@@ -488,6 +561,9 @@ public class Team implements hoop.sim.Team, Logger {
 			while(currentPlayer == firstPivot || currentPlayer == secondPivot) {
 				currentPlayer++;
 			}
+
+			//initialize our team stat 
+			ourTeamStat = new ArrayList<Player>();
 		}
 
 		@Override
@@ -580,6 +656,7 @@ public class Team implements hoop.sim.Team, Logger {
 					move = new Move(lastMove.ourPlayer, 0, Status.SHOOTING);
 					//Log the pass -Jiang
 					passMade[pivot][players[lastMove.ourPlayer-1]-1]++;
+
 					break;
 				default:
 					throw new IllegalArgumentException("Invalid status: " + lastMove.action);
@@ -912,8 +989,30 @@ public class Team implements hoop.sim.Team, Logger {
 		public int playerId;
 		public double weight;
 		
+		// Players ability
+		// 1. Shooting ability
+		public int numShotMade;
+		public int numShotAttempted;
+		// 2 .Blocking ability
+		public int numBlockMade;
+		public int numBlockAttempted;
+		// 3. Passing ability
+		public int numPassMade;
+		public int numPassAttempted;
+		// 4. Intercepting ability
+		public int numInterceptMade; 
+		public int numInterceptAttempted; 
+		
 		public Player(int id) {
 			this.playerId = id;
+			numShotMade=0;
+			numShotAttempted=0;
+			numBlockMade=0;
+			numBlockAttempted=0;
+			numPassMade=0;
+			numPassAttempted=0;
+			numInterceptMade=0;
+			numInterceptAttempted=0;
 		}
 
 		@Override
@@ -921,6 +1020,25 @@ public class Team implements hoop.sim.Team, Logger {
 			return 	(weight > other.weight) ? -1 :
 					(weight < other.weight) ?  1 : 0 ;
 		}
+
+		public String toString(){
+			return "Player #: " + Integer.toString(playerId);
+			
+		}
+
+		//the player has taken shot
+		public void shotMade(){numShotMade++; }
+		public void shotAttempted(){numShotAttempted++; } 
+		public void shotFailed(){numShotMade--;}
+		public void blockMade(){numBlockMade++;}
+		public void blockAttempted(){numBlockAttempted++;}
+		public void blockFailed(){numBlockMade--;}
+		public void passMade(){numPassMade++;}
+		public void passAttempted(){numPassAttempted++;}
+		public void passFailed(){numPassMade--;}		
+		public void interceptMade(){numInterceptMade++;}
+		public void interceptAttempted(){numInterceptAttempted++;}
+		public void interceptFailed(){numInterceptMade--;}
 	}
 
 
