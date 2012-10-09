@@ -406,6 +406,12 @@ public class Team implements hoop.sim.Team, Logger {
 		//Returns the list of best passers
 		List<Integer> getBestPassers();
 
+		//Returns the list of best Blockers
+		List<Integer> getBestBlocker();
+
+		//Returns the list of best Interceptor
+		List<Integer> getBestInterceptor();
+
 		//Returns the extra Infomariton
 		void printExtraInfo();
 		
@@ -881,6 +887,24 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 			
 			return passers;
+		}
+
+
+		//Returns the list of best Blockers
+		@Override
+		public List<Integer> getBestBlocker(){
+			List<Integer> blockerList = new ArrayList<Integer>();
+			return blockerList;
+		}
+
+		//Returns the list of best Interceptor
+		@Override
+		public List<Integer> getBestInterceptor(){
+			List<Integer> interceptor = new ArrayList<Integer>();
+			// int[] interceptros = new int[5];
+			// Arrays.fill(interceptros,0);
+			return interceptor; 
+
 		}
 	}
 	
