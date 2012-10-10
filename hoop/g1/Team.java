@@ -239,7 +239,7 @@ public class Team implements hoop.sim.Team, Logger {
 				// select random int (+1)
 				// if already contains (already assigned to position) that pos
 				// then randomly get again.
-				while(already.contains(pos = bestPassers.get(offset++))){
+				while(already.contains(pos = bestBlockers.get(offset++))){
 				}
 				
 				team[i] = pos;
@@ -259,7 +259,6 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 			log("WE ARE COMPETING AGAINST: " + otherTeamPointer.getName());
 
-			log("------------ pickTeam() call ENDS HERE---------");
 			ourTeamPointer.setCurrentPlayingTeam(team);
 
 			log("Choosing team: " + Arrays.toString(currentPlayingTeam));
@@ -272,6 +271,7 @@ public class Team implements hoop.sim.Team, Logger {
 				currentPlayingTeam[i].positionId = i + 1;
 			}
 			
+			log("------------ pickTeam() call ENDS HERE---------");
 			return team;
 			
 		}
@@ -619,6 +619,9 @@ public class Team implements hoop.sim.Team, Logger {
 					lastBallHolderDefender_from_otherTeam=otherTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
 					lastBallHolderDefender_from_otherTeam.blockAttempted();
 
+					//update stats here
+					lastBallHolder_from_ourTeam.updateShootingWeight();
+					lastBallHolderDefender_from_otherTeam.updateBlockingWeight();
 					break;
 				case SCORED:
 					lastBallHolder_from_ourTeam.passNullify();
@@ -634,9 +637,17 @@ public class Team implements hoop.sim.Team, Logger {
 					lastBallHolderDefender_from_otherTeam.blockAttempted();
 
 
+					//update stats here
+					lastBallHolder_from_ourTeam.updateShootingWeight();
+					lastBallHolderDefender_from_otherTeam.updateBlockingWeight();
+
 					break;
 				case STOLEN:
 					lastBallHolder_from_ourTeam.passFailed();
+
+					//update stats here
+					lastBallHolder_from_ourTeam.updatePassingWeight();
+
 					break;
 				default:
 

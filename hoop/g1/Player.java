@@ -69,5 +69,16 @@ public class Player {
 		public void passNullify(){numPassAttempted--;numPassMade--;}
 		public void shotNullify(){numShotMade--;numShotAttempted--;}
 		public void blockNullify(){numBlockMade--;numBlockAttempted--;}
+
+		//VERY CRUDE. NEED TO UPDATE THIS...
+		public void updateShootingWeight(){
+			shootingWeight += numShotMade/numShotAttempted;
+		}
+		public void updatePassingWeight(){
+			passingWeight += numPassMade/numPassAttempted;
+		}
+		public void updateBlockingWeight(){
+			blockingWeight += numBlockMade/numBlockAttempted;
+		}
 	}
 
