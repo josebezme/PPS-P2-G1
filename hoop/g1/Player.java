@@ -2,9 +2,11 @@ package hoop.g1;
 
 public class Player {
 		public int playerId;
+		public int positionId;
 		public String team;
 		public double shootingWeight;
 		public double passingWeight;
+		public double blockingWeight;
 		
 		// Players ability
 		// 1. Shooting ability

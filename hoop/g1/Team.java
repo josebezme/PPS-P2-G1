@@ -5,6 +5,7 @@ import hoop.sim.Hoop;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,7 @@ public class Team implements hoop.sim.Team, Logger {
 	private int holder = 0; //this variable will store our first passer
 
 	// private Set<OtherTeam> otherTeam = new HashSet<OtherTeam>();
-	private int[] currentPlayingTeam;
+	private Player[] currentPlayingTeam = new Player[TEAM_SIZE];
 	private Player[] currentOpponentTeam = new Player[TEAM_SIZE];
 	
 	private OtherTeam ourTeamPointer;
@@ -71,7 +72,6 @@ public class Team implements hoop.sim.Team, Logger {
 		List<Player> playerObjects = new ArrayList<Player>();
 		PriorityQueue<Player> favoriteShooters = new PriorityQueue<Player>(totalPlayers, SORT_BY_SHOOTING);
 		PriorityQueue<Player> favoritePassers = new PriorityQueue<Player>(totalPlayers, SORT_BY_PASSING);
-		PriorityQueue<Player> favoriteDefender = new PriorityQueue<Player>();
 	}
 	//This array changes based on what team we play against
 
@@ -79,7 +79,7 @@ public class Team implements hoop.sim.Team, Logger {
 	
 	private List<Integer> bestShooters;
 	private List<Integer> bestPassers;
-	private List<Integer> bestDefenders;
+	private List<Integer> bestBlockers;
 
 	private static void shuffle(int[] a, Random gen) {
 		for (int i = 0 ; i != a.length ; ++i) {
@@ -93,6 +93,7 @@ public class Team implements hoop.sim.Team, Logger {
 	private ShotSearchScore[][] shotSearchScores;
 	private Map<String, ShotSearchScore[][]> allShotSearchScores = 
 			new HashMap<String, ShotSearchScore[][]>();
+
 
 
 	private static class ShotSearchScore {
@@ -114,6 +115,7 @@ public class Team implements hoop.sim.Team, Logger {
 		for(int i = 0; i < TEAM_SIZE; i++) {
 			//intilize the opponents(array of Players bojects)
 			currentOpponentTeam[i] = teamStats.playerObjects.get(opponentPlayers[i] - 1);
+			currentOpponentTeam[i].positionId = i + 1;
 			log("OPPOSITE TEAM: " + opponentPlayers[i]);
 			log(currentOpponentTeam[i].toString());
 			
@@ -162,6 +164,7 @@ public class Team implements hoop.sim.Team, Logger {
 				ourPlayers = picker.getPlayers();
 				bestShooters = picker.calculateShooters();
 				bestPassers = picker.calculatePassers();
+				bestBlockers = picker.calculateBlockers();
 			}
 			//Load up the teamsat for a particular team
 			teamStats = allTeamStats.get(opponent);
@@ -206,14 +209,13 @@ public class Team implements hoop.sim.Team, Logger {
 		} else {
 			
 			int[] team = new int[5];
-			currentPlayingTeam = team;
 			// Pick 2 shooters.
-			currentPlayingTeam[0] = bestShooters.get(0);
-			currentPlayingTeam[1] = bestShooters.get(1);
+			team[0] = bestShooters.get(0);
+			team[1] = bestShooters.get(1);
 			
 			List<Integer> already = new ArrayList<Integer>(4);
-			already.add(currentPlayingTeam[0]);
-			already.add(currentPlayingTeam[1]);
+			already.add(team[0]);
+			already.add(team[1]);
 			
 			if((shotSearchScores = allShotSearchScores.get(opponent)) == null) {
 				shotSearchScores = new ShotSearchScore[totalPlayers][totalPlayers];
@@ -239,7 +241,7 @@ public class Team implements hoop.sim.Team, Logger {
 				while(already.contains(pos = bestPassers.get(offset++))){
 				}
 				
-				currentPlayingTeam[i] = pos;
+				team[i] = pos;
 				already.add(pos);
 			}
 			
@@ -260,7 +262,15 @@ public class Team implements hoop.sim.Team, Logger {
 
 			log("Choosing team: " + Arrays.toString(currentPlayingTeam));
 			
-			return currentPlayingTeam;
+			int playerId;
+			for(int i = 0; i < TEAM_SIZE; i++) {
+				playerId = team[i];
+				
+				currentPlayingTeam[i] = ourPlayers.get(playerId - 1);
+				currentPlayingTeam[i].positionId = i + 1;
+			}
+			
+			return team;
 			
 		}
 	}
@@ -514,7 +524,7 @@ public class Team implements hoop.sim.Team, Logger {
 	}
 	
 	public int getPlayerForPosition(int position) {
-		return currentPlayingTeam[position - 1];
+		return currentPlayingTeam[position - 1].playerId;
 	}
 	
 	public int getOpponentForPosition(int position) {
@@ -561,36 +571,7 @@ public class Team implements hoop.sim.Team, Logger {
 			// This is the first turn.
 			game.ourScore = 0;
 		} else if (game.ourScore == yourScore) {
-			// so either pass is blocked
-			// or shot failed.
-			
-	// //TRY TO GET THE SENSE OF previous Round
-		// 	log("lastRound: " + previousRound);
 
-		// 	int[] prevRoundDef=previousRound.defenders();
-		// 	int[] prevRoundHol=previousRound.holders();
-		// 	for (int p : prevRoundDef) {
-		// 		log("Previous Round Defender:" + p);
-		// 	}
-
-	//TRY TO GET THE SENSE OF previous Round ENDS
-	
-		//Maybe depreciated
-		// switch(game.lastMove.action) {
-		// 		case PASSING:
-		// 			// pass was blocked.
-
-		// 			break;
-		// 		case SHOOTING:
-		// 			// shot was blocked.
-		// 			// shot as blocked by:
-		// 			// lastMove.theirPlayer;
-		// 			// log that their player has the ability
-		// 			// to block our shooter.
-		// 			break;
-		// 		default:
-		// 			throw new IllegalArgumentException("Illegal status for defend:" + game.lastMove.action);
-		// 	}
 		} else {
 			// supposedly can only go up.
 			// Maybe we made a shot?
@@ -601,7 +582,7 @@ public class Team implements hoop.sim.Team, Logger {
 			int[] holders=previousRound.holders();
 			int[] defenders=previousRound.defenders();
 			int lastBallHolderIndex=holders.length-1;
-			int lastPlayerNumber = currentPlayingTeam[holder-1];
+			int lastPlayerNumber = currentPlayingTeam[holder-1].playerId;
 
 			Player lastBallHolder_from_ourTeam = ourTeamPointer.getPlayer(holders[lastBallHolderIndex]);
 			Player lastBallHolderDefender_from_otherTeam = otherTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
@@ -669,8 +650,21 @@ public class Team implements hoop.sim.Team, Logger {
 			return picker.getDefenseMatch();
 		}
 		
-		int[] defenders = new int [] {1,2,3,4,5};
-		shuffle(defenders, gen);
+		List<Player> players = new ArrayList<Player>(TEAM_SIZE);
+		players.addAll(Arrays.asList(currentPlayingTeam));
+		
+		Collections.sort(players, SORT_BY_BLOCKING);
+		
+		List<Player> opponentPlayers = new ArrayList<Player>(TEAM_SIZE);
+		opponentPlayers.addAll(Arrays.asList(currentOpponentTeam));
+		
+		Collections.sort(opponentPlayers, SORT_BY_SHOOTING);
+		
+		int[] defenders = new int [5];
+		for(int i = 0; i < TEAM_SIZE; i++) {
+			defenders[opponentPlayers.get(i).positionId - 1] = players.get(i).positionId;  
+		}
+		
 		return defenders;
 	}
 	
@@ -703,7 +697,7 @@ public class Team implements hoop.sim.Team, Logger {
 		List<Integer> calculatePassers();
 
 		//Returns the list of best Blockers
-		List<Integer> getBestBlocker();
+		List<Integer> calculateBlockers();
 
 		//Returns the list of best Interceptor
 		List<Integer> getBestInterceptor();
@@ -1283,9 +1277,94 @@ public class Team implements hoop.sim.Team, Logger {
 
 		//Returns the list of best Blockers
 		@Override
-		public List<Integer> getBestBlocker(){
-			List<Integer> blockerList = new ArrayList<Integer>();
-			return blockerList;
+		public List<Integer> calculateBlockers(){
+			PriorityQueue<Player> blockingQueue = 
+					new PriorityQueue<Player>(totalPlayers, SORT_BY_BLOCKING);
+			
+			Player player = null;
+			
+			double def1Weight = totalBlocksTaken[0] / totalBlocksMade[0];
+			double def2Weight = totalBlocksTaken[1] / totalBlocksMade[1];
+			
+			logger.log("Blocking def1: " + def1Weight);
+			logger.log("Blocking def2: " + def2Weight);
+			
+			double averageWeight1 = 0;
+			double averageWeight2 = 0;
+			
+			double weight1;
+			double weight2;
+			
+			int playerId = 0;
+			for(int i = 0; i < totalPlayers; i++) {
+				playerId = i + 1;
+				if(playerId == firstPivot || playerId == secondPivot) {
+					continue;
+				}
+				
+				player = players.get(i);
+				weight1 = 0;
+				weight2 = 0;
+				
+				if(blocksTaken[0][i] != 0) {
+					weight1 = blocksMade[0][i] / blocksTaken[0][i];
+				}
+				
+				if(blocksTaken[0][i] != 0) {
+					weight2 = blocksMade[1][i] / blocksTaken[1][i];
+				}
+				
+				averageWeight1 += weight1;
+				averageWeight2 += weight2;
+				player.blockingWeight = def1Weight * weight1 + def2Weight * weight2;
+				
+				logger.log("Player " + playerId + ": " + player.blockingWeight);
+				blockingQueue.add(player);
+			}
+			
+			averageWeight1 /= totalPlayers - 2;
+			averageWeight2 /= totalPlayers - 2;
+			
+			// first pivot weight.
+			player = players.get(firstPivot - 1);
+			weight1 = (blocksMade[1][firstPivot - 1] / blocksTaken[1][firstPivot - 1]);
+			weight2 = averageWeight2 * (weight1 / averageWeight1 );
+			
+			// logger.log("---FIRST PIVOT ----");
+			// logger.log("weight1: " + weight1);
+			// logger.log("weight2: " + weight2);
+			// logger.log("weight: " + (weight1 + weight2));
+			player.blockingWeight = weight1 + weight2;
+			blockingQueue.add(player);
+			
+			player = players.get(secondPivot - 1);
+			weight1 = (blocksMade[1][secondPivot - 1] / blocksTaken[1][secondPivot - 1]);
+			weight2 = averageWeight1 * (weight1 / averageWeight2 );
+			
+			// logger.log("---SECOND PIVOT ----");
+			// logger.log("weight1: " + weight1);
+			// logger.log("weight2: " + weight2);
+			// logger.log("weight: " + (weight1 + weight2));
+			player.blockingWeight = weight1 + weight2;
+			blockingQueue.add(player);
+			
+			// logger.log("average1: " + averageWeight1);
+			// logger.log("average2: " + averageWeight2);
+			
+			List<Integer> blockers = new ArrayList<Integer>(12);
+			while(blockingQueue.size() > 0) {
+				blockers.add(blockingQueue.poll().playerId);
+			}
+			
+			for(Player player2 : players) {
+				int p = player2.playerId - 1;
+				for(int numPivot = 0; numPivot < 2; numPivot++) {
+					player2.numBlockAttempted += blocksTaken[numPivot][p];
+					player2.numBlockMade += blocksTaken[numPivot][p];
+				}
+			}
+			
+			return blockers;
 		}
 
 		//Returns the list of best Interceptor
@@ -1325,6 +1404,14 @@ public class Team implements hoop.sim.Team, Logger {
 		public int compare(Player p1, Player p2) {
 			return 	(p1.shootingWeight > p2.shootingWeight) ? -1 :
 					(p1.shootingWeight < p2.shootingWeight) ?  1 : 0 ;
+		}
+	};
+	
+	private static Comparator<Player> SORT_BY_BLOCKING = new Comparator<Player>() {
+		@Override
+		public int compare(Player p1, Player p2) {
+			return 	(p1.blockingWeight > p2.blockingWeight) ? -1 :
+					(p1.blockingWeight < p2.blockingWeight) ?  1 : 0 ;
 		}
 	};
 
