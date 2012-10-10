@@ -250,6 +250,7 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 
 			log("------------ pickTeam() call ENDS HERE---------");
+			ourTeamPointer.setCurrentPlayingTeam(team);
 			return team;
 
 		}
@@ -291,58 +292,89 @@ public class Team implements hoop.sim.Team, Logger {
 		
 		if(previousRound != null && !game.selfGame) {
 			int[] holders = previousRound.holders();
+
+			log("holders.length" + holders.length);
+			if(holders.length > 1){
+				//they pass it around
+
+			}
 			int[] defenders =	previousRound.defenders();
 
-			int lastPasser = holders.length - 1;
+			int lastBallHolderIndex = holders.length - 1;
 			int position = 0;
 			// Player lastBallHolder = opponents[holders.length - 1]; // it's their index + 1
-			Player lastBallHolder_from_otherTeam = otherTeamPointer.getPlayer(holders[holders.length-1]);
-			Player lastBallHolderDefender_from_ourTeam = ourTeamPointer.getPlayer();
-			
+			Player lastBallHolder_from_otherTeam = otherTeamPointer.getPlayer(holders[lastBallHolderIndex]);
+			Player lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
+
 			// Assume the last ballholder was a passer and penalize in the case
 			lastBallHolder_from_otherTeam.passAttempted();
 			lastBallHolder_from_otherTeam.passMade();
+
+			//Assume that the last ballholder defender was a passer defender
+			lastBallHolderDefender_from_ourTeam.interceptAttempted();
+			lastBallHolderDefender_from_ourTeam.interceptMade();
 
 			log("currentPlayingTeam : " + Arrays.toString(currentPlayingTeam));
 			log("Previous Rounds Defenders:" + Arrays.toString(previousRound.defenders()));
 			log("current Opponent PlayerID: " + Arrays.toString(otherTeamPointer.getCurrentPlayingTeam()));
 			switch(previousRound.lastAction()) {
 				case MISSED:
-					//the last ball holder was a shooter
-					lastBallHolder_from_otherTeam.passAttemptedNullify();
-					lastBallHolder_from_otherTeam.passFailed();
+					// Shooter Point of view
+					lastBallHolder_from_otherTeam.passNullify();
 					lastBallHolder_from_otherTeam.shotAttempted();
+
+					// Blocker Point of view
+					lastBallHolderDefender_from_ourTeam.interceptNullify();
+					lastBallHolderDefender_from_ourTeam.blockAttempted();
+					lastBallHolderDefender_from_ourTeam.blockMade();
+
 					log("shot was missed by: " + lastBallHolder_from_otherTeam );
+					log("block was succeeded by: " + lastBallHolderDefender_from_ourTeam);
 
-					// blocked by what player in our team?
-
+					lastBallHolderIndex--;
+					lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
+					lastBallHolderDefender_from_ourTeam.blockAttempted();
 					break;
 				case SCORED:
 					//th least ball holder was a shooter
-					lastBallHolder_from_otherTeam.passAttemptedNullify();
-					lastBallHolder_from_otherTeam.passFailed();
+					// Shooter Point of view
+					lastBallHolder_from_otherTeam.passNullify();
 					lastBallHolder_from_otherTeam.shotAttempted();
 					lastBallHolder_from_otherTeam.shotMade();
+
+					// Blocker Point of view
+					lastBallHolderDefender_from_ourTeam.interceptNullify();
+					lastBallHolderDefender_from_ourTeam.blockAttempted();
 
 					lastBallHolder_from_otherTeam.weight++;
 					teamStats.favoriteShooters.remove(lastBallHolder_from_otherTeam);
 					teamStats.favoriteShooters.add(lastBallHolder_from_otherTeam);
 				
-					lastPasser--;
+
 					log("shot was made by: " + lastBallHolder_from_otherTeam);
+					log("block was failed by: " + lastBallHolderDefender_from_ourTeam);
 				// Continue to next case to do passers.
+					//Assume that only one passes is made: two ball holders
+					
+					lastBallHolderIndex--;
+					lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
+					lastBallHolderDefender_from_ourTeam.blockAttempted();
+
 					break;
-			case STOLEN:
-				lastBallHolder_from_otherTeam.passFailed();
-				log("pass is stolen from " + lastBallHolder_from_otherTeam);
-				for(int i = 0; i < lastPasser; i++) {
-					position = holders[i];
-					lastBallHolder_from_otherTeam = opponents[position - 1]; // it's their index + 1
-					lastBallHolder_from_otherTeam.weight++;
-					teamStats.favoritePassers.remove(lastBallHolder_from_otherTeam);
-					teamStats.favoritePassers.add(lastBallHolder_from_otherTeam);
-				}
-				break;
+				case STOLEN:
+					lastBallHolder_from_otherTeam.passFailed();
+
+					log("pass is stolen from " + lastBallHolder_from_otherTeam);
+
+
+					for(int i = 0; i < lastBallHolderIndex; i++) {
+						position = holders[i];
+						lastBallHolder_from_otherTeam = opponents[position - 1]; // it's their index + 1
+						lastBallHolder_from_otherTeam.weight++;
+						teamStats.favoritePassers.remove(lastBallHolder_from_otherTeam);
+						teamStats.favoritePassers.add(lastBallHolder_from_otherTeam);
+					}
+					break;
 			default:
 				log("START OF THE GAME?");
 				break;
@@ -474,36 +506,67 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 		if(previousRound != null && !game.selfGame) //we only do this when playing with others
 		{
+			int[] holders=previousRound.holders();
+			int[] defenders=previousRound.defenders();
+			int lastBallHolderIndex=holders.length-1;
 			int lastPlayerNumber = currentPlayingTeam[holder-1];
-			Player lastBallHolder= ourTeamStat.get(lastPlayerNumber-1);
+
+			Player lastBallHolder_from_ourTeam = ourTeamPointer.getPlayer(holders[lastBallHolderIndex]);
+			Player lastBallHolderDefender_from_otherTeam = otherTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
 			log("holder: " + holder);
 			log("currentPlayingTeam[holder-1]: " + currentPlayingTeam[holder-1]);
-			log("last Shooter Player Id: " + lastBallHolder);
+			log("last Shooter Player Id: " + lastBallHolder_from_ourTeam);
 			log("our current player ID:" + Arrays.toString(currentPlayingTeam));
+			
 			//Assume it's a passer and reject that if shooter in the case
-			lastBallHolder.passAttempted();
-			lastBallHolder.passMade();
+			lastBallHolder_from_ourTeam.passAttempted();
+			lastBallHolder_from_ourTeam.passMade();
+
+			//Assume that the last ballholder defender was a passer defender
+			lastBallHolderDefender_from_otherTeam.interceptAttempted();
+			lastBallHolderDefender_from_otherTeam.interceptMade();
 
 			switch(previousRound.lastAction()) {
 				case MISSED:
 					//was shooter
-					lastBallHolder.passAttemptedNullify();
-					lastBallHolder.passFailed();
+					lastBallHolder_from_ourTeam.passNullify();
+					lastBallHolder_from_ourTeam.shotAttempted();
 
-					lastBallHolder.shotAttempted();
+					//Blocker's point of view
+					lastBallHolderDefender_from_otherTeam.interceptNullify();
+					lastBallHolderDefender_from_otherTeam.blockAttempted();
+					lastBallHolderDefender_from_otherTeam.blockMade();
+
+
+
+					log("shot was missed by: " + lastBallHolder_from_ourTeam );
+					log("block was succeeded by: " + lastBallHolderDefender_from_otherTeam);
+
+					lastBallHolderIndex--;
+					lastBallHolderDefender_from_otherTeam=otherTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
+					lastBallHolderDefender_from_otherTeam.blockAttempted();
+
 					break;
 				case SCORED:
-					lastBallHolder.passAttemptedNullify();
-					lastBallHolder.passFailed();
+					lastBallHolder_from_ourTeam.passNullify();
 					
-					lastBallHolder.shotAttempted();
-					lastBallHolder.shotMade();
+					lastBallHolder_from_ourTeam.shotAttempted();
+					lastBallHolder_from_ourTeam.shotMade();
+
+					// Blocker Point of view
+					lastBallHolderDefender_from_otherTeam.interceptNullify();
+					lastBallHolderDefender_from_otherTeam.blockAttempted();
+					lastBallHolderIndex--;
+					lastBallHolderDefender_from_otherTeam=otherTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
+					lastBallHolderDefender_from_otherTeam.blockAttempted();
+
+
 					break;
 				case STOLEN:
-					lastBallHolder.passFailed();
+					lastBallHolder_from_ourTeam.passFailed();
 					break;
 				default:
-					log("START OF THE GAME?");
+
 					break;
 					
 			}

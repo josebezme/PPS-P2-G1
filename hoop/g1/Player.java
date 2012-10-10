@@ -68,6 +68,9 @@ public class Player implements Comparable<Player>{
 		public void interceptMade(){numInterceptMade++;}
 		public void interceptAttempted(){numInterceptAttempted++;}
 		public void interceptFailed(){numInterceptMade--;}
-		public void passAttemptedNullify(){numPassAttempted--;}
+		public void interceptNullify(){numInterceptAttempted--; numInterceptMade--;};
+		public void passNullify(){numPassAttempted--;numPassMade--;}
+		public void shotNullify(){numShotMade--;numShotAttempted--;}
+		public void blockNullify(){numBlockMade--;numBlockAttempted--;}
 	}
 

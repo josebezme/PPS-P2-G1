@@ -31,4 +31,8 @@ public class OtherTeam{
 	public Player getPlayer(int playerPosition){
 		return playerList.get(currentPlayingTeam[playerPosition -1] -1) ;
 	}
+
+	public List<Player> getPlayerList(){
+		return playerList;
+	}
 }
