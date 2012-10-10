@@ -13,11 +13,14 @@ public class OtherTeam{
 		playerList = new ArrayList(totalPlayers);
 	}
 
-	public void setTeam(int[] team){
+	public void setCurrentPlayingTeam(int[] team){
 		this.currentPlayingTeam = team;
 	}
 
 	public int[] getCurrentPlayingTeam(){
 		return currentPlayingTeam;
+	}
+	public String getName(){
+		return teamName;
 	}
 }

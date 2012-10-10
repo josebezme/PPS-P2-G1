@@ -50,7 +50,7 @@ public class Team implements hoop.sim.Team, Logger {
 	// private Set<OtherTeam> otherTeam = new HashSet<OtherTeam>();
 	private int[] currentPlayingTeam;
 	private int[] currentOpponentTeam;
-
+	private OtherTeam otherTeamPointer;
 
 	private TeamPicker picker;
 	private Game game;
@@ -60,6 +60,8 @@ public class Team implements hoop.sim.Team, Logger {
 	private Game attackingGame;
 	
 	private Map<String, StatWrapper> allTeamStats = new HashMap<String, StatWrapper>();
+	private Map<String, OtherTeam> name2OtherTeam = new HashMap<String, OtherTeam>();
+	private List<OtherTeam> otherTeamList = new ArrayList<OtherTeam>();
 	private StatWrapper teamStats;
 	private static List<Player> ourTeamStat;
 
@@ -105,6 +107,7 @@ public class Team implements hoop.sim.Team, Logger {
 			return;
 		}
 		
+
 		
 		for(int i = 0; i < TEAM_SIZE; i++) {
 			//intilize the opponents(array of Players bojects)
@@ -119,7 +122,7 @@ public class Team implements hoop.sim.Team, Logger {
 	@Override
 	public int[] pickTeam(String opponent, int totalPlayers, hoop.sim.Game[] history) {
 
-		
+	
 		log("------------ pickTeam() call STARTS HERE---------");
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
 		// Here we find out how many players we have for the game.
@@ -227,9 +230,25 @@ public class Team implements hoop.sim.Team, Logger {
 			}
 			
 			log("Choosing team: " + Arrays.toString(team));
+			if(!game.selfGame){
+
+				//newly seen team
+				if(!name2OtherTeam.containsKey(opponent))
+				{
+					otherTeamPointer = new OtherTeam(opponent,totalPlayers);
+					otherTeamList.add(otherTeamPointer);
+
+				}
+				else{
+					otherTeamPointer = name2OtherTeam.get(opponent);
+				}
+				log("WE ARE COMPETING AGAINST: " + otherTeamPointer.getName());
+
+			}
+
 			log("------------ pickTeam() call ENDS HERE---------");
 			return team;
-			
+
 		}
 	}
 
