@@ -60,6 +60,7 @@ public class Team implements hoop.sim.Team, Logger {
 		List<Player> playerObjects = new ArrayList<Player>();
 		PriorityQueue<Player> favoriteShooters = new PriorityQueue<Player>();
 		PriorityQueue<Player> favoritePassers = new PriorityQueue<Player>();
+		PriorityQueue<Player> favoriteDefender = new PriorityQueue<Player>();
 	}
 	
 	private Player[] opponents = new Player[TEAM_SIZE];
@@ -67,6 +68,8 @@ public class Team implements hoop.sim.Team, Logger {
 	private List<Integer> bestShooters;
 
 	private List<Integer> bestPassers;
+	
+	private List<Integer> bestDefenders;
 
 	private static boolean in(int[] a, int n, int x)
 	{
@@ -134,6 +137,7 @@ public class Team implements hoop.sim.Team, Logger {
 				log("STARTED_TOURN");
 				bestShooters = picker.getBestShooters();
 				bestPassers = picker.getBestPassers();
+//				bestDefenders= picker.getBestDefenders();
 			}
 			
 			teamStats = allTeamStats.get(opponent);
@@ -421,17 +425,27 @@ public class Team implements hoop.sim.Team, Logger {
 	
 	public static class PivotTeamPicker implements TeamPicker {
 		
+		enum TrainStatus{
+			Shooting, Blocking
+		}
 		private int totalPlayers;
 		private int games;
 		private int turns;
 		private int firstPivot;
 		private int secondPivot;
 		
+		private int trainingType=0;
 		private double[][] shotsMade;
 		private double[][] shotsTaken;
 		
+		private double[][] blocksMade;
+		private double[][] blocksTaken;
+		
 		private int[] totalShotsTaken = new int[2];
 		private int[] totalShotsMade = new int[2];
+		
+		private int[] totalBlocksTaken = new  int[2];
+		private int[] totalBlocksMade = new int[2];
 		
 		private double[][] passMade;
 		private double[][] passTaken;
@@ -441,7 +455,7 @@ public class Team implements hoop.sim.Team, Logger {
 		private int[] teamB = new int[TEAM_SIZE];
 		
 		private int shooter = -1;
-		private int changeShooter = 0;
+		private int changeShooter = 3;
 		
 		private int pickingTeam; // Changes every game twice.
 		private int currentPlayer; //
@@ -454,8 +468,12 @@ public class Team implements hoop.sim.Team, Logger {
 		public double[][] getShotsTaken(){return shotsTaken; }
 		public double[][] getPassMade(){return passMade; }
 		public double[][] getPassTaken(){return passTaken; }
+		public double[][] getBlocksMade(){return blocksMade; }
+		public double[][] getBlocksTaken(){return blocksTaken; }
 		public int[] getTotalShotsTaken(){return totalShotsTaken; }
 		public int[] getTotalShotsMade(){return totalShotsMade; }
+		public int[] getTotalBlocksTaken(){return totalBlocksTaken; }
+		public int[] getTotalBlockssMade(){return totalBlocksMade; }
 
 		@Override
 		public void printExtraInfo(){
@@ -529,6 +547,7 @@ public class Team implements hoop.sim.Team, Logger {
 
 		@Override
 		public int getBallHolder() {
+			
 			if(changeShooter == 0) {
 				shooter = ++shooter % TEAM_SIZE; //shooter variabl is an index !!!!
 			}
@@ -545,6 +564,21 @@ public class Team implements hoop.sim.Team, Logger {
 
 			int ballHolder = ((shooter + 1) % TEAM_SIZE) + 1;
 			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder);
+			return ballHolder; //we return the position of ball holder here [simulation #]
+		}
+		
+		public int getRandomHolder(){
+			int[] players = null;
+			if(pickingDefense == 0) {
+				players = teamA;
+			} else {
+				players = teamB;
+			}
+			pickingDefense = ++pickingDefense % 2;
+
+
+			int ballHolder = TEAM_SIZE -1;
+			logger.log(whatTeam("attack") + ": Picker: ballHolder: [playerID]: "+ players[ballHolder-1] + " | [sim#]: " + ballHolder+" Defender trainging!");
 			return ballHolder; //we return the position of ball holder here [simulation #]
 		}
 		
@@ -567,6 +601,16 @@ public class Team implements hoop.sim.Team, Logger {
 			
 			switch(lastMove.action) {
 				case START:
+					if(trainingType==1 || trainingType==2){
+						trainingType++;
+						int nextHolder = firstPivot;
+						logger.log("Defender Training..."+whatTeam("attack") + ": Passing to --> playerID " + players[shooter] + " ( [Sim#]: " + nextHolder + ") ");
+						move = new Move(lastMove.ourPlayer, nextHolder, Status.PASSING);
+						//Log the pass -Jiang
+						//passTaken[pivot][players[lastMove.ourPlayer-1]-1]++;
+						break;
+					}else 
+						trainingType=(++trainingType)%4;
 					// do the pass.
 					int nextHolder = shooter + 1;
 					logger.log(whatTeam("attack") + ": Passing to --> playerID " + players[shooter] + " ( [Sim#]: " + nextHolder + ") ");
