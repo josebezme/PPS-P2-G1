@@ -17,6 +17,10 @@ public class OtherTeam{
 		}
 	}
 
+
+	public void setPlayerList(List<Player> playerList){
+		this.playerList = playerList;
+	}
 	public void setCurrentPlayingTeam(int[] team){
 		this.currentPlayingTeam = team;
 	}

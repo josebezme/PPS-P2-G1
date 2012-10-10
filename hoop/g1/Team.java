@@ -162,6 +162,7 @@ public class Team implements hoop.sim.Team, Logger {
 				ourTeamPointer = new OtherTeam(name(),totalPlayers);
 //				bestDefenders= picker.getBestDefenders();
 				ourPlayers = picker.getPlayers();
+				ourTeamPointer.setPlayerList(ourPlayers);
 				bestShooters = picker.calculateShooters();
 				bestPassers = picker.calculatePassers();
 				bestBlockers = picker.calculateBlockers();
@@ -251,6 +252,7 @@ public class Team implements hoop.sim.Team, Logger {
 			if(!name2OtherTeam.containsKey(opponent)) {
 				otherTeamPointer = new OtherTeam(opponent,totalPlayers);
 				otherTeamList.add(otherTeamPointer);
+				name2OtherTeam.put(opponent, otherTeamPointer);
 				
 			} else {
 				otherTeamPointer = name2OtherTeam.get(opponent);
