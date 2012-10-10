@@ -50,6 +50,7 @@ public class Team implements hoop.sim.Team, Logger {
 	// private Set<OtherTeam> otherTeam = new HashSet<OtherTeam>();
 	private int[] currentPlayingTeam;
 	private int[] currentOpponentTeam;
+	private OtherTeam ourTeamPointer;
 	private OtherTeam otherTeamPointer;
 
 	private TeamPicker picker;
@@ -106,7 +107,8 @@ public class Team implements hoop.sim.Team, Logger {
 		if(game.selfGame) {
 			return;
 		}
-		
+		//need to store that info to other team
+		otherTeamPointer.setCurrentPlayingTeam(opponentPlayers);
 
 		
 		for(int i = 0; i < TEAM_SIZE; i++) {
@@ -156,6 +158,7 @@ public class Team implements hoop.sim.Team, Logger {
 				log("STARTED_TOURN");
 				bestShooters = picker.getBestShooters();
 				bestPassers = picker.getBestPassers();
+				ourTeamPointer = new OtherTeam(name(),totalPlayers);
 			}
 			//Load up the teamsat for a particular team
 			teamStats = allTeamStats.get(opponent);
@@ -288,52 +291,56 @@ public class Team implements hoop.sim.Team, Logger {
 		
 		if(previousRound != null && !game.selfGame) {
 			int[] holders = previousRound.holders();
+			int[] defenders =	previousRound.defenders();
+
 			int lastPasser = holders.length - 1;
 			int position = 0;
-			Player lastBallHolder = opponents[holders.length - 1]; // it's their index + 1
+			// Player lastBallHolder = opponents[holders.length - 1]; // it's their index + 1
+			Player lastBallHolder_from_otherTeam = otherTeamPointer.getPlayer(holders[holders.length-1]);
+			Player lastBallHolderDefender_from_ourTeam = ourTeamPointer.getPlayer();
 			
 			// Assume the last ballholder was a passer and penalize in the case
-			lastBallHolder.passAttempted();
-			lastBallHolder.passMade();
+			lastBallHolder_from_otherTeam.passAttempted();
+			lastBallHolder_from_otherTeam.passMade();
 
 			log("currentPlayingTeam : " + Arrays.toString(currentPlayingTeam));
 			log("Previous Rounds Defenders:" + Arrays.toString(previousRound.defenders()));
-			log("current Opponent PlayerID: " + Arrays.toString(currentOpponentTeam));
+			log("current Opponent PlayerID: " + Arrays.toString(otherTeamPointer.getCurrentPlayingTeam()));
 			switch(previousRound.lastAction()) {
 				case MISSED:
 					//the last ball holder was a shooter
-					lastBallHolder.passAttemptedNullify();
-					lastBallHolder.passFailed();
-					lastBallHolder.shotAttempted();
-					log("shot was missed by: " + lastBallHolder + " from team: " + teamStats);
+					lastBallHolder_from_otherTeam.passAttemptedNullify();
+					lastBallHolder_from_otherTeam.passFailed();
+					lastBallHolder_from_otherTeam.shotAttempted();
+					log("shot was missed by: " + lastBallHolder_from_otherTeam );
 
 					// blocked by what player in our team?
 
 					break;
 				case SCORED:
 					//th least ball holder was a shooter
-					lastBallHolder.passAttemptedNullify();
-					lastBallHolder.passFailed();
-					lastBallHolder.shotAttempted();
-					lastBallHolder.shotMade();
+					lastBallHolder_from_otherTeam.passAttemptedNullify();
+					lastBallHolder_from_otherTeam.passFailed();
+					lastBallHolder_from_otherTeam.shotAttempted();
+					lastBallHolder_from_otherTeam.shotMade();
 
-					lastBallHolder.weight++;
-					teamStats.favoriteShooters.remove(lastBallHolder);
-					teamStats.favoriteShooters.add(lastBallHolder);
+					lastBallHolder_from_otherTeam.weight++;
+					teamStats.favoriteShooters.remove(lastBallHolder_from_otherTeam);
+					teamStats.favoriteShooters.add(lastBallHolder_from_otherTeam);
 				
 					lastPasser--;
-					log("shot was made by: " + lastBallHolder + " from team: " + teamStats);
+					log("shot was made by: " + lastBallHolder_from_otherTeam);
 				// Continue to next case to do passers.
 					break;
 			case STOLEN:
-				lastBallHolder.passFailed();
-				log("pass is stolen from " + lastBallHolder);
+				lastBallHolder_from_otherTeam.passFailed();
+				log("pass is stolen from " + lastBallHolder_from_otherTeam);
 				for(int i = 0; i < lastPasser; i++) {
 					position = holders[i];
-					lastBallHolder = opponents[position - 1]; // it's their index + 1
-					lastBallHolder.weight++;
-					teamStats.favoritePassers.remove(lastBallHolder);
-					teamStats.favoritePassers.add(lastBallHolder);
+					lastBallHolder_from_otherTeam = opponents[position - 1]; // it's their index + 1
+					lastBallHolder_from_otherTeam.weight++;
+					teamStats.favoritePassers.remove(lastBallHolder_from_otherTeam);
+					teamStats.favoritePassers.add(lastBallHolder_from_otherTeam);
 				}
 				break;
 			default:

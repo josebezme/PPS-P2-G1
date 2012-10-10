@@ -11,6 +11,10 @@ public class OtherTeam{
 	public OtherTeam(String teamName, int totalPlayers){
 		this.teamName = teamName;
 		playerList = new ArrayList(totalPlayers);
+		for (int p=0; p < totalPlayers; p++ ) {
+			Player player = new Player(p+1, teamName);
+			playerList.add(p,player);
+		}
 	}
 
 	public void setCurrentPlayingTeam(int[] team){
@@ -22,5 +26,9 @@ public class OtherTeam{
 	}
 	public String getName(){
 		return teamName;
+	}
+
+	public Player getPlayer(int playerPosition){
+		return playerList.get(currentPlayingTeam[playerPosition -1] -1) ;
 	}
 }
