@@ -10,7 +10,7 @@ public class OtherTeam{
 	
 	public OtherTeam(String teamName, int totalPlayers){
 		this.teamName = teamName;
-		playerList = new ArrayList(totalPlayers);
+		playerList = new ArrayList<Player>(totalPlayers);
 		for (int p=0; p < totalPlayers; p++ ) {
 			Player player = new Player(p+1, teamName);
 			playerList.add(p,player);

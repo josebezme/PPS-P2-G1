@@ -1,10 +1,10 @@
 package hoop.g1;
 
-
-public class Player implements Comparable<Player>{
+public class Player {
 		public int playerId;
 		public String team;
-		public double weight;
+		public double shootingWeight;
+		public double passingWeight;
 		
 		// Players ability
 		// 1. Shooting ability
@@ -43,11 +43,6 @@ public class Player implements Comparable<Player>{
 			numInterceptMade=0;
 			numInterceptAttempted=0;
 			this.team=team;
-		}
-
-		public int compareTo(Player other) {
-			return 	(weight > other.weight) ? -1 :
-					(weight < other.weight) ?  1 : 0 ;
 		}
 
 		public String toString(){
