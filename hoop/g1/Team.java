@@ -6,6 +6,7 @@ import hoop.sim.Hoop;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -45,7 +46,11 @@ public class Team implements hoop.sim.Team, Logger {
 	private final int version = ++versions;
 
 	private int holder = 0; //this variable will store our first passer
+
+	// private Set<OtherTeam> otherTeam = new HashSet<OtherTeam>();
 	private int[] currentPlayingTeam;
+	private int[] currentOpponentTeam;
+
 
 	private TeamPicker picker;
 	private Game game;
@@ -89,8 +94,10 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 	}
 
+
 	@Override
 	public void opponentTeam(int[] opponentPlayers) {
+		currentOpponentTeam=opponentPlayers;
 		log("Called opponentTeam()");
 		// We're told what players were picked to play us. 123
 		// Keep track of these players for the game Jose & Jiang & Albert
@@ -111,6 +118,7 @@ public class Team implements hoop.sim.Team, Logger {
 
 	@Override
 	public int[] pickTeam(String opponent, int totalPlayers, hoop.sim.Game[] history) {
+
 		
 		log("------------ pickTeam() call STARTS HERE---------");
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
@@ -270,6 +278,8 @@ public class Team implements hoop.sim.Team, Logger {
 			lastBallHolder.passMade();
 
 			log("currentPlayingTeam : " + Arrays.toString(currentPlayingTeam));
+			log("Previous Rounds Defenders:" + Arrays.toString(previousRound.defenders()));
+			log("current Opponent PlayerID: " + Arrays.toString(currentOpponentTeam));
 			switch(previousRound.lastAction()) {
 				case MISSED:
 					//the last ball holder was a shooter
@@ -277,6 +287,9 @@ public class Team implements hoop.sim.Team, Logger {
 					lastBallHolder.passFailed();
 					lastBallHolder.shotAttempted();
 					log("shot was missed by: " + lastBallHolder + " from team: " + teamStats);
+
+					// blocked by what player in our team?
+
 					break;
 				case SCORED:
 					//th least ball holder was a shooter
@@ -427,15 +440,20 @@ public class Team implements hoop.sim.Team, Logger {
 		// 		default:
 		// 			throw new IllegalArgumentException("Illegal status for defend:" + game.lastMove.action);
 		// 	}
-
-		if(!game.selfGame) //we only do this when playing with others
+		}
+		else {
+			// supposedly can only go up.
+			// Maybe we made a shot?
+			game.ourScore = yourScore;
+		}
+		if(previousRound != null && !game.selfGame) //we only do this when playing with others
 		{
 			int lastPlayerNumber = currentPlayingTeam[holder-1];
 			Player lastBallHolder= ourTeamStat.get(lastPlayerNumber-1);
 			log("holder: " + holder);
 			log("currentPlayingTeam[holder-1]: " + currentPlayingTeam[holder-1]);
 			log("last Shooter Player Id: " + lastBallHolder);
-
+			log("our current player ID:" + Arrays.toString(currentPlayingTeam));
 			//Assume it's a passer and reject that if shooter in the case
 			lastBallHolder.passAttempted();
 			lastBallHolder.passMade();
@@ -466,11 +484,7 @@ public class Team implements hoop.sim.Team, Logger {
 		}
 
 			
-		} else {
-			// supposedly can only go up.
-			// Maybe we made a shot?
-			game.ourScore = yourScore;
-		}
+	
 		
 		// We're on defense so our last move is not defending.
 		game.lastMove = new Move(0, 0, Status.DEFENDING);

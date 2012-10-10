@@ -1,0 +1,22 @@
+package hoop.g1;
+
+import java.util.ArrayList;
+
+public class OtherTeam{
+	String teamName;
+	// List<Player> playerList;
+	int[] currentPlayingTeam;
+	
+	public OtherTeam(String teamName, int totalPlayers){
+		this.teamName = teamName;
+		// playerList = new ArrayList(totalPlayers);
+	}
+
+	public void setTeam(int[] team){
+		this.currentPlayingTeam = team;
+	}
+
+	public int[] getCurrentPlayingTeam(){
+		return currentPlayingTeam;
+	}
+}
