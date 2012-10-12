@@ -8,6 +8,8 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class HistoryAnalyzer{
 	Game[] history;
@@ -238,10 +240,15 @@ public class HistoryAnalyzer{
 		}
 	}
 
-	// public void printStat(){
-		
-	// 	for (name2TeamObj)
+	public void printStat(){
+		Iterator itr = name2TeamObj.entrySet().iterator();
+		while(itr.hasNext()){
+			Map.Entry pairs = (Map.Entry) itr.next();
+			System.out.println("pairs : " + pairs.getKey() + " | value: " + pairs.getValue());
+			itr.remove();
+			
+		}
 
-	// }
+	}
 
 }
