@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.HashMap;
 
 public class HistoryAnalyzer{
 	Game[] history;
@@ -14,11 +15,12 @@ public class HistoryAnalyzer{
 	LinkedList<Player> playersTeamA;
 	LinkedList<Player> playersTeamB;
 	Set<Player> seen = new HashSet<Player>();
-	// HashMap<String, OtherTeam>  name2TeamObj = new HashMap<String,OtherTeam>();
+	HashMap<String, OtherTeam>  name2TeamObj = new HashMap<String,OtherTeam>();
 
+	OtherTeam teamAObject;
+	OtherTeam teamBObject;
 
 	/*
-
 		Game object contains
 
 		teamA
@@ -42,7 +44,7 @@ public class HistoryAnalyzer{
 	*/
 	public HistoryAnalyzer(){
 	}
-	public void takeHistory(Game[] history){
+	public void takeHistory(Game[] history, int totalPlayers){
 		this.history = history;
 	
 		//update
@@ -53,6 +55,29 @@ public class HistoryAnalyzer{
 
 		this.game = history[0];
 
+		//TEAM
+		//if I've never seen that team, initialize'
+
+		if(!name2TeamObj.containsKey(game.teamA)){
+			teamAObject = new OtherTeam(game.teamA, totalPlayers);
+			name2TeamObj.put(game.teamA, teamAObject);
+			System.out.println("adding new team : " + game.teamA);
+
+		} else {
+			teamAObject = name2TeamObj.get(game.teamA);
+			
+		}
+		if(!name2TeamObj.containsKey(game.teamB)){
+			teamBObject= new  OtherTeam(game.teamB,totalPlayers);
+			name2TeamObj.put(game.teamB, teamBObject);
+			System.out.println("adding new team : " + game.teamB);
+		} else {
+			teamBObject = name2TeamObj.get(game.teamB);
+		}
+
+		teamAObject.setCurrentPlayingTeam(game.playersA());
+		teamBObject.setCurrentPlayingTeam(game.playersB());
+		
 
 		//initiize if not seen
 		playersTeamA = new LinkedList<Player>();
@@ -62,13 +87,20 @@ public class HistoryAnalyzer{
 		for (int pA : game.playersA() ) {
 			player = new Player(pA, game.teamA);
 			if(seen.contains(player)){
-				playersTeamA.add(player);
+				//This means player has been seen
+				//meaning i need to load him up 
+				System.out.println("player # : " + pA + " : " + player + " is being loaded up");
+				System.out.println("teamAObject" + teamAObject);
+				
+				
+				player = teamAObject.getPlayerById(pA);
+				// playersTeamA.add(player);
 				// System.out.println("Player Added: " + player);
 				
 			} else {
 				System.out.println("NEW Player Added A: " + player);
-				seen.add(player);	
 				playersTeamA.add(player);
+				seen.add(player);	
 				
 			}
 		}
@@ -76,7 +108,7 @@ public class HistoryAnalyzer{
 		for (int pB : game.playersB() ) {
 			player = new Player(pB, game.teamB);
 			if(seen.contains(player)){
-				playersTeamB.add(player);
+				player = teamBObject.getPlayerById(pB);
 			} else {
 				System.out.println("NEW Player Added B: " + player);
 				seen.add(player);	
@@ -84,7 +116,12 @@ public class HistoryAnalyzer{
 				
 			}
 		}
+		//print
 		printHistory();
+		//do the update
+		update();
+
+
 	}
 
 	public void printHistory(){
@@ -124,94 +161,87 @@ public class HistoryAnalyzer{
 	public void loadTeam(){
 
 	}
-	// public void update(){
-	// 	for(Round r : game){
-	// 		int[] holders = r.holders();
-	// 		int[] defenders =	r.defenders();
+	public void update(){
+	
+		for (int roundIdx=0; roundIdx < game.rounds() ; roundIdx++ ) {
+			Round r = game.round(roundIdx);
+			int[] holders = r.holders();
+			int[] defenders =r.defenders();
 
-	// 		if(holders.length > 1){
-	// 		//they pass it around
-	// 		//let's just assume that pass is done twice at most
-	// 		}
-
-	// 		int lastBallHolderIndex = holders.length - 1;
-	// 		int position = 0;
-	// 		Player lastBallHolder_from_otherTeam = otherTeamPointer.getPlayer(holders[lastBallHolderIndex]);
-	// 		Player lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
-
-	// 		// Assume the last ballholder was a passer and penalize in the case
-	// 		lastBallHolder_from_otherTeam.passAttempted();
-	// 		lastBallHolder_from_otherTeam.passMade();
-
-	// 		//Assume that the last ballholder defender was a passer defender
-	// 		lastBallHolderDefender_from_ourTeam.interceptAttempted();
-	// 		lastBallHolderDefender_from_ourTeam.interceptMade();
-
-	// 		log("currentPlayingTeam : " + Arrays.toString(currentPlayingTeam));
-	// 		log("Previous Rounds Defenders:" + Arrays.toString(previousRound.defenders()));
-	// 		log("current Opponent PlayerID: " + Arrays.toString(otherTeamPointer.getCurrentPlayingTeam()));
-	// 		switch(previousRound.lastAction()) {
-	// 		case MISSED:
-	// 		// Shooter Point of view
-	// 		lastBallHolder_from_otherTeam.passNullify();
-	// 		lastBallHolder_from_otherTeam.shotAttempted();
-
-	// 		// Blocker Point of view
-	// 		lastBallHolderDefender_from_ourTeam.interceptNullify();
-	// 		lastBallHolderDefender_from_ourTeam.blockAttempted();
-	// 		lastBallHolderDefender_from_ourTeam.blockMade();
-
-	// 		log("shot was missed by: " + lastBallHolder_from_otherTeam );
-	// 		log("block was succeeded by: " + lastBallHolderDefender_from_ourTeam);
-
-	// 		lastBallHolderIndex--;
-	// 		lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
-	// 		lastBallHolderDefender_from_ourTeam.blockAttempted();
-	// 		break;
-	// 		case SCORED:
-	// 		//th least ball holder was a shooter
-	// 		// Shooter Point of view
-	// 		lastBallHolder_from_otherTeam.passNullify();
-	// 		lastBallHolder_from_otherTeam.shotAttempted();
-	// 		lastBallHolder_from_otherTeam.shotMade();
-
-	// 		// Blocker Point of view
-	// 		lastBallHolderDefender_from_ourTeam.interceptNullify();
-	// 		lastBallHolderDefender_from_ourTeam.blockAttempted();
-
-	// 		lastBallHolder_from_otherTeam.shootingWeight++;
-	// 		teamStats.favoriteShooters.remove(lastBallHolder_from_otherTeam);
-	// 		teamStats.favoriteShooters.add(lastBallHolder_from_otherTeam);
-
-	// 		log("shot was made by: " + lastBallHolder_from_otherTeam);
-	// 		log("block was failed by: " + lastBallHolderDefender_from_ourTeam);
-	// 		// Continue to next case to do passers.
-	// 		//Assume that only one passes is made: two ball holders
-
-	// 		lastBallHolderIndex--;
-	// 		lastBallHolderDefender_from_ourTeam=ourTeamPointer.getPlayer(defenders[holders[lastBallHolderIndex]-1]);
-	// 		lastBallHolderDefender_from_ourTeam.blockAttempted();
-
-	// 		break;
-	// 		case STOLEN:
-	// 		lastBallHolder_from_otherTeam.passFailed();
-
-	// 		log("pass is stolen from " + lastBallHolder_from_otherTeam);
+			if(holders.length > 1){
+			//they pass it around
+			//let's just assume that pass is done twice at most
+			}
 
 
-	// 		for(int i = 0; i < lastBallHolderIndex; i++) {
-	// 			position = holders[i];
-	// 			lastBallHolder_from_otherTeam = currentOpponentTeam[position - 1]; // it's their index + 1
-	// 			lastBallHolder_from_otherTeam.passingWeight++;
-	// 			teamStats.favoritePassers.remove(lastBallHolder_from_otherTeam);
-	// 			teamStats.favoritePassers.add(lastBallHolder_from_otherTeam);
-	// 		}
-	// 		break;
-	// 		default:
-	// 		log("START OF THE GAME?");
-	// 		break;
+			//teamA update
+			//teamB update
+
+			Player attackBH;
+			Player defendBH;
+
+			//Passing Update
+			int lastHolder = holders.length - 1;
+
+			if(r.attacksA) {
+				//team A is attacking
+				attackBH = teamAObject.getPlayer(holders[lastHolder]);
+				defendBH = teamBObject.getPlayer(defenders[holders[lastHolder]-1]);
+			} else {
+				//team B is attacking
+				attackBH = teamBObject.getPlayer(holders[lastHolder]);
+				defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
+			}
+
+
+			// Assume the last ballholder was a passer and penalize in the case
+			attackBH.passAttempted();
+			attackBH.passMade();
+
+			//Assume that the last ballholder defender was a passer defender
+			defendBH.interceptAttempted();
+			defendBH.interceptMade();
+
+			switch(r.lastAction()) {
+				case MISSED: // implies that pass was successful
+					// Shooter Point of view
+					attackBH.passNullify();
+					defendBH.interceptNullify();
+
+					attackBH.shotAttempted();
+					defendBH.blockAttempted();
+					defendBH.blockMade();
+					// for(int h=0; h < holders.length - 1; h++){
+
+					// }
+					break;
+				case SCORED: // implies that pass was successful
+				//th least ball holder was a shooter
+					attackBH.passNullify();
+					defendBH.interceptNullify();
+					
+					// Shooter Point of view
+					attackBH.shotAttempted();
+					attackBH.shotMade();
+
+					// Blocker Point of view
+					defendBH.blockAttempted();
+					break;
+				case STOLEN:
+					attackBH.passFailed();
+					break;
+			default:
+			break;
 						
-	// 		}
-	// 	}
+			}
+			
+		}
+	}
+
+	// public void printStat(){
+		
+	// 	for (name2TeamObj)
+
+	// }
 
 }

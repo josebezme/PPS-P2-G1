@@ -48,7 +48,7 @@ public class Player {
 		}
 
 		public String toString(){
-			return "Player #: " + Integer.toString(playerId) + " from team [" + team +"]";
+			return "Player #: " + Integer.toString(playerId) + " - [" + team +"]";
 			
 		}
 
@@ -83,7 +83,7 @@ public class Player {
 
 		public int hashCode(){
 			return (playerId * 123456789) ^
-		      		 (playerId * 987654321);
+		      		 (team.hashCode() * 987654321);
 		}
 
 		public boolean equals(Object obj)

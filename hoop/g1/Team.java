@@ -128,7 +128,7 @@ public class Team implements hoop.sim.Team, Logger {
 
 		//take history eery turn
 		if(history != null)
-			ha.takeHistory(history);
+			ha.takeHistory(history,totalPlayers);
 		
 		log("------------ pickTeam() call STARTS HERE---------");
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
