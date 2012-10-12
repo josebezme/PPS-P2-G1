@@ -79,7 +79,8 @@ public class TweakedHoop {
 
 	public static void main(String[] args) throws Exception
 	{
-		boolean display = true;
+		// boolean display = true;
+		boolean display = false;
 		// path with players
 		String playerPath = "hoop/players.list";
 		if (args.length > 0)

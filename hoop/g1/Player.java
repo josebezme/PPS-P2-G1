@@ -1,7 +1,7 @@
 package hoop.g1;
 
 public class Player {
-		public int playerId;
+		public final int playerId;
 		public int positionId;
 		public String team;
 		public double shootingWeight;
@@ -79,6 +79,19 @@ public class Player {
 		}
 		public void updateBlockingWeight(){
 			blockingWeight += numBlockMade/numBlockAttempted;
+		}
+
+		public int hashCode(){
+			return (playerId * 123456789) ^
+		      		 (playerId * 987654321);
+		}
+
+		public boolean equals(Object obj)
+		{
+			if (!(obj instanceof Player))
+				return false;
+			Player p = (Player) obj;
+			return playerId == p.playerId && team.equals(p.team);
 		}
 	}
 

@@ -13,7 +13,7 @@ public class Game {
 	private int[] playersA;
 	private int[] playersB;
 
-	public enum Action {SCORED, MISSED, STOLEN};
+	public enum Action {SCORED, MISSED, STOLEN, PASSED};
 
 	public static class Round {
 

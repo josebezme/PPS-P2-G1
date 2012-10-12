@@ -4,7 +4,7 @@ import hoop.sim.*;
 import java.util.*;
 
 public class Team implements hoop.sim.Team {
-
+  // private static HistoryAnalyzer ha= new HistoryAnalyzer();
   private HashMap<String, Integer> teamIDs;
   private Player[] myRoster;
   private ArrayList<Player[]> rosters;
@@ -165,6 +165,7 @@ public class Team implements hoop.sim.Team {
   
   /* return 5 players in 1,2,3,4,...,P where P total players */
   public int[] pickTeam(String opponent, int totalPlayers, Game[] history) {
+    // ha.takeHistory(history);
     if (firstGame) 
       init(totalPlayers);
     opponentID = initTeam(opponent);

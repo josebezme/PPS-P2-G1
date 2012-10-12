@@ -21,7 +21,7 @@ public class Team implements hoop.sim.Team, Logger {
 	private static final Random gen = new Random();
 	private static final boolean DEBUG = false;
 	private static final int TEAM_SIZE = 5;
-	
+	private static HistoryAnalyzer ha = new HistoryAnalyzer();
 	private boolean startedTournament;
 
 	private static int totalPlayers;
@@ -126,7 +126,10 @@ public class Team implements hoop.sim.Team, Logger {
 	@Override
 	public int[] pickTeam(String opponent, int totalPlayers, hoop.sim.Game[] history) {
 
-	
+		//take history eery turn
+		if(history != null)
+			ha.takeHistory(history);
+		
 		log("------------ pickTeam() call STARTS HERE---------");
 		log("Called pickTeam() with opponent: " + opponent + " with tP: " + totalPlayers);
 		// Here we find out how many players we have for the game.
