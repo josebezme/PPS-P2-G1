@@ -19,7 +19,7 @@ public class Team implements hoop.sim.Team, Logger {
 	private static int versions;
 	
 	private static final Random gen = new Random();
-	private static final boolean DEBUG = false;
+	private static final boolean DEBUG = true;
 	private static final int TEAM_SIZE = 5;
 	
 	protected Map<String, OtherTeam> name2OtherTeam = new HashMap<String, OtherTeam>();

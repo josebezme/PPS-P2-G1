@@ -109,12 +109,10 @@ public class HistoryAnalyzer{
 		}
 
 		// Assume the last ballholder was a passer and penalize in the case
-		attackBH.passAttempted();
-		attackBH.passMade();
+
 
 		//Assume that the last ballholder defender was a passer defender
-		defendBH.interceptAttempted();
-		defendBH.interceptMade();
+
 
 		switch(r.lastAction()) {
 			case MISSED: // implies that pass was successful
@@ -122,7 +120,7 @@ public class HistoryAnalyzer{
 				attackBH.shotAttempted();
 				defendBH.blockAttempted();
 				defendBH.blockMade();
-				
+
 				lastHolder--;
 				
 				break;
@@ -134,8 +132,6 @@ public class HistoryAnalyzer{
 				attackBH.shotMade();
 				
 				defendBH.blockAttempted();
-
-				
 				lastHolder--;
 				
 				break;
@@ -150,7 +146,7 @@ public class HistoryAnalyzer{
 				break;
 		}
 		
-		for(int i = 0; i < lastHolder; i++) {
+		for(int i = 0; i <= lastHolder; i++) {
 			if(r.attacksA) {
 				//team A is attacking
 				attackBH = playersA[holders[lastHolder] - 1];
@@ -169,6 +165,7 @@ public class HistoryAnalyzer{
 		}
 		
 		printStat();
+		printRawCount();
 	}
 
 	public void printGame(Game g, int i){
@@ -224,4 +221,33 @@ public class HistoryAnalyzer{
 			logger.log("--------------------print Stat ENDS-----------------");
 		}
 	}
+
+	public void printRawCount(){
+		OtherTeam teamPointer;
+		for(String key : name2TeamObj.keySet()) {
+			logger.log("--------------------print RAW COUNT-----------------");
+			teamPointer = name2TeamObj.get(key);
+			
+			List<Player> pList = teamPointer.getPlayerList();
+			logger.log("player     \tSM\tSA\tPM\tPA\tBM\tBA\tIM\tIA");
+			
+			for (Player p : pList ) {
+				String output = "Player:" + p.playerId +
+						"\t"+ String.format("%1$.2f", p.shotsMade) +
+						"\t"+ String.format("%1$.2f", p.shotsAttempted) +
+						"\t"+ String.format("%1$.2f", p.passesMade) +
+						"\t"+ String.format("%1$.2f", p.passesAttempted) + 
+						"\t"+ String.format("%1$.2f", p.blocksMade) +
+						"\t"+ String.format("%1$.2f", p.blocksAttempted) +
+						"\t"+ String.format("%1$.2f", p.interceptsMade) +
+						"\t"+ String.format("%1$.2f", p.interceptsAttempted);
+				logger.log(output);
+				
+			}
+
+			logger.log("pairs : " + key + " | value: " + teamPointer);
+			logger.log("--------------------print RAW COUNT ENDS-----------------");
+		}
+	}
+
 }
