@@ -48,7 +48,8 @@ public class Player {
 		}
 
 		public String toString(){
-			return "Player #: " + Integer.toString(playerId) + " - [" + team +"]";
+			// return "Player #: " + Integer.toString(playerId) + " - [" + team +"]";
+			return "&_" + Integer.toString(playerId);
 			
 		}
 

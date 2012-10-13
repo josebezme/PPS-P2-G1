@@ -10,12 +10,14 @@ import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.List;
 
 public class HistoryAnalyzer{
 	Game[] history;
 	Game game;
 	LinkedList<Player> playersTeamA;
 	LinkedList<Player> playersTeamB;
+	boolean selfGame;
 	Set<Player> seen = new HashSet<Player>();
 	HashMap<String, OtherTeam>  name2TeamObj = new HashMap<String,OtherTeam>();
 
@@ -45,8 +47,11 @@ public class HistoryAnalyzer{
 
 	*/
 	public HistoryAnalyzer(){
+		selfGame=false;
 	}
 	public void takeHistory(Game[] history, int totalPlayers){
+		selfGame=false;
+
 		this.history = history;
 	
 		//update
@@ -59,7 +64,8 @@ public class HistoryAnalyzer{
 
 		//TEAM
 		//if I've never seen that team, initialize'
-
+		if(game.teamA.equals(game.teamB))
+			selfGame=true;
 		if(!name2TeamObj.containsKey(game.teamA)){
 			teamAObject = new OtherTeam(game.teamA, totalPlayers);
 			name2TeamObj.put(game.teamA, teamAObject);
@@ -69,16 +75,30 @@ public class HistoryAnalyzer{
 			teamAObject = name2TeamObj.get(game.teamA);
 			
 		}
+
 		if(!name2TeamObj.containsKey(game.teamB)){
 			teamBObject= new  OtherTeam(game.teamB,totalPlayers);
 			name2TeamObj.put(game.teamB, teamBObject);
 			System.out.println("adding new team : " + game.teamB);
 		} else {
+			//if self game
+				
+			//if not self game
 			teamBObject = name2TeamObj.get(game.teamB);
 		}
+		System.out.println("teamA " + Arrays.toString(game.playersA()));
+		System.out.println("teamB " + Arrays.toString(game.playersB()));
+		
+		if(selfGame){
+			teamAObject.setCurrentPlayingTeam(game.playersA());
+			teamBObject.setCurrentPlayingTeam2(game.playersB());
+		} else {
+			teamAObject.setCurrentPlayingTeam(game.playersA());
+			teamBObject.setCurrentPlayingTeam(game.playersB());
+		}
 
-		teamAObject.setCurrentPlayingTeam(game.playersA());
-		teamBObject.setCurrentPlayingTeam(game.playersB());
+		System.out.println(Arrays.toString(teamAObject.getCurrentPlayingTeam()));
+		System.out.println(Arrays.toString(teamBObject.getCurrentPlayingTeam2()));
 		
 
 		//initiize if not seen
@@ -122,6 +142,9 @@ public class HistoryAnalyzer{
 		printHistory();
 		//do the update
 		update();
+
+		//print stats
+		printStat();
 
 
 	}
@@ -168,16 +191,7 @@ public class HistoryAnalyzer{
 		for (int roundIdx=0; roundIdx < game.rounds() ; roundIdx++ ) {
 			Round r = game.round(roundIdx);
 			int[] holders = r.holders();
-			int[] defenders =r.defenders();
-
-			if(holders.length > 1){
-			//they pass it around
-			//let's just assume that pass is done twice at most
-			}
-
-
-			//teamA update
-			//teamB update
+			int[] defenders = r.defenders();
 
 			Player attackBH;
 			Player defendBH;
@@ -185,16 +199,26 @@ public class HistoryAnalyzer{
 			//Passing Update
 			int lastHolder = holders.length - 1;
 
-			if(r.attacksA) {
-				//team A is attacking
-				attackBH = teamAObject.getPlayer(holders[lastHolder]);
-				defendBH = teamBObject.getPlayer(defenders[holders[lastHolder]-1]);
+			if(selfGame){
+				if(r.attacksA) {
+					attackBH = teamAObject.getPlayer(holders[lastHolder]);
+					defendBH = teamBObject.getPlayer2(defenders[holders[lastHolder]-1]);
+				} else {
+					attackBH = teamBObject.getPlayer2(holders[lastHolder]);
+					defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
+				}
 			} else {
-				//team B is attacking
-				attackBH = teamBObject.getPlayer(holders[lastHolder]);
-				defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
+				if(r.attacksA) {
+					//team A is attacking
+					attackBH = teamAObject.getPlayer(holders[lastHolder]);
+					defendBH = teamBObject.getPlayer(defenders[holders[lastHolder]-1]);
+					
+				} else {
+					//team B is attacking
+					attackBH = teamBObject.getPlayer(holders[lastHolder]);
+					defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
+				}
 			}
-
 
 			// Assume the last ballholder was a passer and penalize in the case
 			attackBH.passAttempted();
@@ -212,6 +236,7 @@ public class HistoryAnalyzer{
 
 					attackBH.shotAttempted();
 					defendBH.blockAttempted();
+					
 					defendBH.blockMade();
 					// for(int h=0; h < holders.length - 1; h++){
 
@@ -224,10 +249,10 @@ public class HistoryAnalyzer{
 					
 					// Shooter Point of view
 					attackBH.shotAttempted();
-					attackBH.shotMade();
-
-					// Blocker Point of view
 					defendBH.blockAttempted();
+
+					attackBH.shotMade();
+					// Blocker Point of view
 					break;
 				case STOLEN:
 					attackBH.passFailed();
@@ -242,9 +267,28 @@ public class HistoryAnalyzer{
 
 	public void printStat(){
 		Iterator itr = name2TeamObj.entrySet().iterator();
+		OtherTeam teamPointer;
 		while(itr.hasNext()){
 			Map.Entry pairs = (Map.Entry) itr.next();
+			System.out.println("--------------------print Stat-----------------");
+			teamPointer = (OtherTeam) pairs.getValue();
+			
+			List<Player> pList = teamPointer.getPlayerList();
+			System.out.println("player\tSM\tSA\tBM\tBA");
+			
+			for (Player p : pList ) {
+				System.out.print("Player:" + p.playerId);
+				
+				System.out.print("\t"+ p.numShotMade);
+				System.out.print("\t"+ p.numShotAttempted);
+				System.out.print("\t"+ p.numBlockMade);
+				System.out.print("\t"+ p.numBlockAttempted);
+				System.out.println();
+				
+			}
+
 			System.out.println("pairs : " + pairs.getKey() + " | value: " + pairs.getValue());
+			System.out.println("--------------------print Stat ENDS-----------------");
 			itr.remove();
 			
 		}
