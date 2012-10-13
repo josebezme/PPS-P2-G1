@@ -4,275 +4,224 @@ import hoop.g1.OtherTeam;
 import hoop.sim.Game;
 import hoop.sim.Game.Round;
 import java.util.Arrays;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
 
 public class HistoryAnalyzer{
-	Game[] history;
-	Game game;
-	LinkedList<Player> playersTeamA;
-	LinkedList<Player> playersTeamB;
-	Set<Player> seen = new HashSet<Player>();
 	Map<String, OtherTeam>  name2TeamObj; 
+	private int lastLength;
+	private Team team;
+	private Logger logger;
 
-	OtherTeam teamAObject;
-	OtherTeam teamBObject;
-	private Team ourTeam;
-
-	/*
-		Game object contains
-
-		teamA
-		teamB
-		scoreA
-		scoreB
-		playersA()
-		playersB()
-		rounds()
-		roundX()
-
-		//Round has
-		attacksA
-		attacksB
-		defenders();
-		holders();
-		lastAction();
-		
-		Observation: the smaller the index of the Game[], the more recent the game is.
-
-	*/
 	public HistoryAnalyzer(Team team) {
 		this.name2TeamObj = team.name2OtherTeam;
-		this.ourTeam = team;
+		this.team = team;
 	}
 	
-	public void takeHistory(Game[] history, int totalPlayers) {
-		this.history = history;
+	public void setLogger(Logger logger) {
+		this.logger = logger;
+	}
 	
-		//TEAM
-		//if I've never seen that team, initialize'
-		
-		if(history == null || history.length ==  0) {
+	public void analyzeGameHistory(Game[] games, int totalPlayers) {
+	
+		if(games == null || games.length ==  0) {
 			return; //no need to take history
 		} 
 
-		this.game = history[0];
+		Game game = games[0];
 		
-		if(!name2TeamObj.containsKey(game.teamA)){
-			teamAObject = new OtherTeam(game.teamA, totalPlayers);
-			name2TeamObj.put(game.teamA, teamAObject);
-			System.out.println("adding new team : " + game.teamA);
-		} else {
-			teamAObject = name2TeamObj.get(game.teamA);
-		}
-		
-		if(!name2TeamObj.containsKey(game.teamB)){
-			teamBObject= new  OtherTeam(game.teamB,totalPlayers);
-			name2TeamObj.put(game.teamB, teamBObject);
-			System.out.println("adding new team : " + game.teamB);
-		} else {
-			//if self game
+		OtherTeam teamAObject = null;
+		OtherTeam teamBObject = null;
+		for(int i = lastLength; i < games.length; i++) {
+			game = games[i];
 			
-			//if not self game
-			teamBObject = name2TeamObj.get(game.teamB);
-		}
-
-		
-		System.out.println("teamA " + Arrays.toString(game.playersA()));
-		System.out.println("teamB " + Arrays.toString(game.playersB()));
-		
-		teamAObject.setCurrentPlayingTeam(game.playersA());
-		teamBObject.setCurrentPlayingTeam(game.playersB());
-
-		System.out.println(Arrays.toString(teamAObject.getCurrentPlayingTeam()));
-		
-		//initiize if not seen
-		playersTeamA = new LinkedList<Player>();
-		playersTeamB = new LinkedList<Player>();
-
-		Player player;
-		for (int pA : game.playersA() ) {
-			player = new Player(pA, game.teamA);
-			if(seen.contains(player)){
-				//This means player has been seen
-				//meaning i need to load him up 
-				System.out.println("player # : " + pA + " : " + player + " is being loaded up");
-				System.out.println("teamAObject" + teamAObject);
-				
-				
-				player = teamAObject.getPlayerById(pA);
-				// playersTeamA.add(player);
-				// System.out.println("Player Added: " + player);
-				
+			if(!name2TeamObj.containsKey(game.teamA)){
+				teamAObject = new OtherTeam(game.teamA, totalPlayers);
+				name2TeamObj.put(game.teamA, teamAObject);
+				logger.log("adding new team : " + game.teamA);
 			} else {
-				System.out.println("NEW Player Added A: " + player);
-				playersTeamA.add(player);
-				seen.add(player);	
-				
+				teamAObject = name2TeamObj.get(game.teamA);
 			}
-		}
-
-		for (int pB : game.playersB() ) {
-			player = new Player(pB, game.teamB);
-			if(seen.contains(player)){
-				player = teamBObject.getPlayerById(pB);
+			
+			if(!name2TeamObj.containsKey(game.teamB)){
+				teamBObject= new  OtherTeam(game.teamB,totalPlayers);
+				name2TeamObj.put(game.teamB, teamBObject);
+				logger.log("adding new team : " + game.teamB);
 			} else {
-				System.out.println("NEW Player Added B: " + player);
-				seen.add(player);	
-				playersTeamB.add(player);
-				
+				teamBObject = name2TeamObj.get(game.teamB);
 			}
+			
+			//  Dont anaylze our games a second time.
+			if(team.ourTeamPointer == teamBObject || team.ourTeamPointer == teamAObject) {
+				return;
+			}
+			
+			logger.log("teamA " + Arrays.toString(game.playersA()));
+			logger.log("teamB " + Arrays.toString(game.playersB()));
+			
+			//do the update
+			printGame(game, i);
+			analyzeGame(game, teamAObject, teamBObject);
 		}
-		//print
-		printHistory();
-		//do the update
-		update();
-
+		
 		//print stats
 		printStat();
-
-
 	}
 
-	public void printHistory(){
-		System.out.println("----------------Game History-------------------");
-		
-		int i=0;
-		for (Game g : history) {
-			System.out.print("Game: " + i + "\t");
-			System.out.print(g.teamA + " vs. " + g.teamB);
-			System.out.print(" | score: " + g.scoreA + " : " + g.scoreB);
-			System.out.print(" | teamA: " + Arrays.toString(g.playersA()) + " vs. teamB:" + Arrays.toString(g.playersB()));
-			System.out.println("| rounds: " + g.rounds());
-			for(int j=0; j< g.rounds();j++){
-				Round r = g.round(j);
-				System.out.print("--> Round [" + j + "] ");
-				if(r.attacksA)
-					System.out.print("attack A [" + g.teamA + "]");
-				else
-					System.out.print("attack B [" + g.teamB + "]");
-
-				
-				System.out.println(" defenders: " + Arrays.toString(r.defenders())
-									+ " | holders:  " + Arrays.toString(r.holders())
-									+ " | lastAction: " + r.lastAction()
-
-									);
-				
-			}
-									
-			System.out.println();
-			
-			i++;
-		}
-		System.out.println("----------------Game History Ends-------------------");
-	}
-
-	public void loadTeam(){
-
-	}
-	public void update(){
-	
+	private void analyzeGame(Game game, OtherTeam teamA, OtherTeam teamB) {
 		for (int roundIdx=0; roundIdx < game.rounds() ; roundIdx++ ) {
 			Round r = game.round(roundIdx);
-			int[] holders = r.holders();
-			int[] defenders = r.defenders();
+			
+			Player[] playersA = new Player[5];
+			for(int i = 0; i < 5; i++) {
+				playersA[i] = teamA.getPlayer(game.playersA()[i]);
+			}
+			
+			Player[] playersB = new Player[5];
+			for(int i = 0; i < 5; i++) {
+				playersB[i] = teamB.getPlayer(game.playersA()[i]);
+			}
+			
+			analyzeRound(r, playersA, playersB);
+		}
+		
+	}
 
-			Player attackBH;
-			Player defendBH;
+	public void analyzeRound(Round r, Player[] playersA, Player[] playersB) {
+		int[] holders = r.holders();
+		int[] defenders = r.defenders();
 
-			//Passing Update
-			int lastHolder = holders.length - 1;
+		Player attackBH;
+		Player defendBH;
 
+		//Passing Update
+		int lastHolder = holders.length - 1;
+
+		if(r.attacksA) {
+			//team A is attacking
+			attackBH = playersA[holders[lastHolder] - 1];
+			defendBH = playersB[defenders[holders[lastHolder]-1] - 1];
+			
+		} else {
+			//team B is attacking
+			attackBH = playersB[holders[lastHolder] - 1];
+			defendBH = playersA[defenders[holders[lastHolder]-1] - 1];
+		}
+
+		// Assume the last ballholder was a passer and penalize in the case
+		attackBH.passAttempted();
+		attackBH.passMade();
+
+		//Assume that the last ballholder defender was a passer defender
+		defendBH.interceptAttempted();
+		defendBH.interceptMade();
+
+		switch(r.lastAction()) {
+			case MISSED: // implies that pass was successful
+				// Shooter Point of view
+				attackBH.shotAttempted();
+				defendBH.blockAttempted();
+				defendBH.blockMade();
+				
+				lastHolder--;
+				
+				break;
+			case SCORED: // implies that pass was successful
+			//th least ball holder was a shooter
+				
+				// Shooter Point of view
+				attackBH.shotAttempted();
+				attackBH.shotMade();
+				
+				defendBH.blockAttempted();
+
+				
+				lastHolder--;
+				
+				break;
+			case STOLEN:
+				attackBH.passAttempted();
+				defendBH.interceptAttempted();
+				defendBH.interceptMade();
+				
+				lastHolder--;
+				break;
+			default:
+				break;
+		}
+		
+		for(int i = 0; i < lastHolder; i++) {
 			if(r.attacksA) {
 				//team A is attacking
-				attackBH = teamAObject.getPlayerByPosition(holders[lastHolder]);
-				defendBH = teamBObject.getPlayerByPosition(defenders[holders[lastHolder]-1]);
+				attackBH = playersA[holders[lastHolder] - 1];
+				defendBH = playersB[defenders[holders[lastHolder]-1] - 1];
 				
 			} else {
 				//team B is attacking
-				attackBH = teamBObject.getPlayerByPosition(holders[lastHolder]);
-				defendBH = teamAObject.getPlayerByPosition(defenders[holders[lastHolder]-1]);
-			}
-
-			// Assume the last ballholder was a passer and penalize in the case
-			attackBH.passAttempted();
-			attackBH.passMade();
-
-			//Assume that the last ballholder defender was a passer defender
-			defendBH.interceptAttempted();
-			defendBH.interceptMade();
-
-			switch(r.lastAction()) {
-				case MISSED: // implies that pass was successful
-					// Shooter Point of view
-					attackBH.passNullify();
-					defendBH.interceptNullify();
-
-					attackBH.shotAttempted();
-					defendBH.blockAttempted();
-					
-					defendBH.blockMade();
-					// for(int h=0; h < holders.length - 1; h++){
-
-					// }
-					break;
-				case SCORED: // implies that pass was successful
-				//th least ball holder was a shooter
-					attackBH.passNullify();
-					defendBH.interceptNullify();
-					
-					// Shooter Point of view
-					attackBH.shotAttempted();
-					defendBH.blockAttempted();
-
-					attackBH.shotMade();
-					// Blocker Point of view
-					break;
-				case STOLEN:
-					attackBH.passFailed();
-					break;
-			default:
-			break;
-						
+				attackBH = playersB[holders[lastHolder] - 1];
+				defendBH = playersA[defenders[holders[lastHolder]-1] - 1];
 			}
 			
+			attackBH.passAttempted();
+			attackBH.passMade();
+			
+			defendBH.interceptAttempted();
 		}
+		
+		printStat();
+	}
+
+	public void printGame(Game g, int i){
+		logger.log("----------------Game History-------------------");
+		
+		String output = "Game: " + i + "\t" +
+				g.teamA + " vs. " + g.teamB +
+				" | score: " + g.scoreA + " : " + g.scoreB +
+				" | teamA: " + Arrays.toString(g.playersA()) + " vs. teamB:" + Arrays.toString(g.playersB());
+		
+		logger.log(output);
+		logger.log("| rounds: " + g.rounds());
+		for(int j=0; j< g.rounds();j++){
+			Round r = g.round(j);
+			output = "--> Round [" + j + "] ";
+			if(r.attacksA)
+				output += "attack A [" + g.teamA + "]";
+			else
+				output += "attack B [" + g.teamB + "]";
+
+			logger.log(output + " defenders: " + Arrays.toString(r.defenders())
+								+ " | holders:  " + Arrays.toString(r.holders())
+								+ " | lastAction: " + r.lastAction()
+
+								);
+			
+		}
+								
+		logger.log("");
+			
 	}
 
 	public void printStat(){
-		Iterator itr = name2TeamObj.entrySet().iterator();
 		OtherTeam teamPointer;
-		while(itr.hasNext()){
-			Map.Entry pairs = (Map.Entry) itr.next();
-			System.out.println("--------------------print Stat-----------------");
-			teamPointer = (OtherTeam) pairs.getValue();
+		for(String key : name2TeamObj.keySet()) {
+			logger.log("--------------------print Stat-----------------");
+			teamPointer = name2TeamObj.get(key);
 			
 			List<Player> pList = teamPointer.getPlayerList();
-			System.out.println("player\tSM\tSA\tBM\tBA");
+			logger.log("player     \tSw\tBw\tPw\tIw");
 			
 			for (Player p : pList ) {
-				System.out.print("Player:" + p.playerId);
-				
-				System.out.print("\t"+ p.numShotMade);
-				System.out.print("\t"+ p.numShotAttempted);
-				System.out.print("\t"+ p.numBlockMade);
-				System.out.print("\t"+ p.numBlockAttempted);
-				System.out.println();
+				String output = "Player:" + p.playerId +
+						"\t"+ String.format("%1$.2f", p.getShootingWeight()) +
+						"\t"+ String.format("%1$.2f", p.getBlockingWeight()) +
+						"\t"+ String.format("%1$.2f", p.getPassingWeight()) +
+						"\t"+ String.format("%1$.2f", p.getInterceptionWeight());
+				logger.log(output);
 				
 			}
 
-			System.out.println("pairs : " + pairs.getKey() + " | value: " + pairs.getValue());
-			System.out.println("--------------------print Stat ENDS-----------------");
-			itr.remove();
-			
+			logger.log("pairs : " + key + " | value: " + teamPointer);
+			logger.log("--------------------print Stat ENDS-----------------");
 		}
-
 	}
-
 }

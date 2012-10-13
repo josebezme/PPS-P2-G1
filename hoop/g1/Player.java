@@ -4,46 +4,46 @@ public class Player {
 		public final int playerId;
 		public int positionId;
 		public String team;
-		public double preShootingWeight;
-		public double prePassingWeight;
-		public double preBlockingWeight;
+		public double preShootingWeight = -1;
+		public double prePassingWeight = -1;
+		public double preBlockingWeight = -1;
 		
 		// Players ability
 		// 1. Shooting ability
-		public double numShotMade;
-		public double numShotAttempted;
+		public double shotsMade;
+		public double shotsAttempted;
 		// 2 .Blocking ability
-		public double numBlockMade;
-		public double numBlockAttempted;
+		public double blocksMade;
+		public double blocksAttempted;
 		// 3. Passing ability
-		public double numPassMade;
-		public double numPassAttempted;
+		public double passesMade;
+		public double passesAttempted;
 		// 4. Intercepting ability
-		public double numInterceptMade; 
-		public double numInterceptAttempted; 
+		public double interceptsMade; 
+		public double interceptsAttempted; 
 		
 		public Player(int id) {
 			this.playerId = id;
-			numShotMade=0;
-			numShotAttempted=0;
-			numBlockMade=0;
-			numBlockAttempted=0;
-			numPassMade=0;
-			numPassAttempted=0;
-			numInterceptMade=0;
-			numInterceptAttempted=0;
+			shotsMade=0;
+			shotsAttempted=0;
+			blocksMade=0;
+			blocksAttempted=0;
+			passesMade=0;
+			passesAttempted=0;
+			interceptsMade=0;
+			interceptsAttempted=0;
 			this.team="unknown";
 		}
 		public Player(int id, String team) {
 			this.playerId = id;
-			numShotMade=0;
-			numShotAttempted=0;
-			numBlockMade=0;
-			numBlockAttempted=0;
-			numPassMade=0;
-			numPassAttempted=0;
-			numInterceptMade=0;
-			numInterceptAttempted=0;
+			shotsMade=0;
+			shotsAttempted=0;
+			blocksMade=0;
+			blocksAttempted=0;
+			passesMade=0;
+			passesAttempted=0;
+			interceptsMade=0;
+			interceptsAttempted=0;
 			this.team=team;
 		}
 
@@ -54,50 +54,73 @@ public class Player {
 		}
 
 		//the player has taken shot
-		public void shotMade(){numShotMade++; }
-		public void shotAttempted(){numShotAttempted++; } 
-		public void shotFailed(){numShotMade--;}
-		public void blockMade(){numBlockMade++;}
-		public void blockAttempted(){numBlockAttempted++;}
-		public void blockFailed(){numBlockMade--;}
-		public void passMade(){numPassMade++;}
-		public void passAttempted(){numPassAttempted++;}
-		public void passFailed(){numPassMade--;}		
-		public void interceptMade(){numInterceptMade++;}
-		public void interceptAttempted(){numInterceptAttempted++;}
-		public void interceptFailed(){numInterceptMade--;}
-		public void interceptNullify(){numInterceptAttempted--; numInterceptMade--;};
-		public void passNullify(){numPassAttempted--;numPassMade--;}
-		public void shotNullify(){numShotMade--;numShotAttempted--;}
-		public void blockNullify(){numBlockMade--;numBlockAttempted--;}
+		public void shotMade(){shotsMade++; }
+		public void shotAttempted(){shotsAttempted++; } 
+		public void blockMade(){blocksMade++;}
+		public void blockAttempted(){blocksAttempted++;}
+		public void passMade(){passesMade++;}
+		public void passAttempted(){passesAttempted++;}
+		public void interceptMade(){interceptsMade++;}
+		public void interceptAttempted(){interceptsAttempted++;}
 
 		//VERY CRUDE. NEED TO UPDATE THIS...
 		
-		private static double PRE_RATIO = 0.5;
+		public boolean ourShooter() {
+			return (preShootingWeight >= 0);
+		}
+		
+		private static double PRE_RATIO = 0.75;
 		public double getShootingWeight() {
 			
-			double dynShootingWeight = 0.5;
-			if(numShotAttempted != 0) {
-				dynShootingWeight = numShotMade/numShotAttempted;
+			double dynShootingWeight = -1;
+			if(shotsAttempted != 0) {
+				dynShootingWeight = shotsMade/shotsAttempted;
+			} else if(ourShooter()) {
+				dynShootingWeight = preShootingWeight; 
 			}
 			
 			
-			return (preShootingWeight == 0) // Then this an opponent Player
-					? dynShootingWeight : // Return dynamic weight.
-					((preShootingWeight * PRE_RATIO) + (dynShootingWeight * (1 - PRE_RATIO))) / 2 //  
-					;
+			return (ourShooter()) // Then this an opponent Player
+					? ((preShootingWeight * PRE_RATIO) + (dynShootingWeight * (1 - PRE_RATIO))) / 2 //  
+					: dynShootingWeight ;
+					 // Return dynamic weight.
 		}
 		
 		public double getBlockingWeight() {
-			return 0.0;
+			
+			double dynBlockingWeight = -1;
+			if(blocksAttempted != 0) {
+				dynBlockingWeight = blocksMade/blocksAttempted;
+			} else if(ourShooter()) {
+				dynBlockingWeight = preBlockingWeight;
+			}
+			
+			return (ourShooter())
+					? ((preBlockingWeight * PRE_RATIO) + (dynBlockingWeight * (1 - PRE_RATIO))) / 2
+					: dynBlockingWeight ;
 		}
 		
 		public double getPassingWeight() {
-			return 0.0;
+			
+			double dynPassingWeight = -1;
+			if(passesAttempted != 0) {
+				dynPassingWeight = passesMade / passesAttempted;
+			} else if(ourShooter()) {
+				dynPassingWeight = prePassingWeight;
+			}
+			
+			return (ourShooter())
+					? ((prePassingWeight * PRE_RATIO) + (dynPassingWeight * (1 - PRE_RATIO))) / 2
+					: dynPassingWeight ;
 		}
 		
 		public double getInterceptionWeight() {
-			return 0.0;
+			double interceptRatio = -1;
+			if(interceptsAttempted != 0) {
+				interceptRatio = interceptsMade / interceptsAttempted;
+			}
+			
+			return interceptRatio;
 		}
 		
 		public double getTotalWeight() {
