@@ -8,7 +8,6 @@ public class OtherTeam{
 	static int totalPlayers;
 	List<Player> playerList;
 	int[] currentPlayingTeam;
-	int[] currentPlayingTeam2;
 
 	
 	public OtherTeam(String teamName, int totalPlayers){
@@ -28,25 +27,21 @@ public class OtherTeam{
 	public void setCurrentPlayingTeam(int[] team){
 		this.currentPlayingTeam = team;
 	}
-	public void setCurrentPlayingTeam2(int[] team){
-		this.currentPlayingTeam2 = team;
-	}
 
 	public int[] getCurrentPlayingTeam(){
 		return currentPlayingTeam;
 	}
-	public int[] getCurrentPlayingTeam2(){
-		return currentPlayingTeam2;
-	}
+
 	public String getName(){
 		return teamName;
 	}
 
-	public Player getPlayer(int playerPosition){
-		return playerList.get(currentPlayingTeam[playerPosition -1] -1) ;
+	public Player getPlayerByPosition(int playerPosition){
+		return getPlayer(currentPlayingTeam[playerPosition - 1]);
 	}
-	public Player getPlayer2(int playerPosition){
-		return playerList.get(currentPlayingTeam2[playerPosition -1] -1) ;
+	
+	public Player getPlayer(int playerId) {
+		return playerList.get(playerId - 1) ;
 	}
 
 	public Player getPlayerById(int id){

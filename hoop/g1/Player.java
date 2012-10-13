@@ -4,9 +4,9 @@ public class Player {
 		public final int playerId;
 		public int positionId;
 		public String team;
-		public double shootingWeight;
-		public double passingWeight;
-		public double blockingWeight;
+		public double preShootingWeight;
+		public double prePassingWeight;
+		public double preBlockingWeight;
 		
 		// Players ability
 		// 1. Shooting ability
@@ -72,14 +72,36 @@ public class Player {
 		public void blockNullify(){numBlockMade--;numBlockAttempted--;}
 
 		//VERY CRUDE. NEED TO UPDATE THIS...
-		public void updateShootingWeight(){
-			shootingWeight += numShotMade/numShotAttempted;
+		
+		private static double PRE_RATIO = 0.5;
+		public double getShootingWeight() {
+			
+			double dynShootingWeight = 0.5;
+			if(numShotAttempted != 0) {
+				dynShootingWeight = numShotMade/numShotAttempted;
+			}
+			
+			
+			return (preShootingWeight == 0) // Then this an opponent Player
+					? dynShootingWeight : // Return dynamic weight.
+					((preShootingWeight * PRE_RATIO) + (dynShootingWeight * (1 - PRE_RATIO))) / 2 //  
+					;
 		}
-		public void updatePassingWeight(){
-			passingWeight += numPassMade/numPassAttempted;
+		
+		public double getBlockingWeight() {
+			return 0.0;
 		}
-		public void updateBlockingWeight(){
-			blockingWeight += numBlockMade/numBlockAttempted;
+		
+		public double getPassingWeight() {
+			return 0.0;
+		}
+		
+		public double getInterceptionWeight() {
+			return 0.0;
+		}
+		
+		public double getTotalWeight() {
+			return getShootingWeight() + getBlockingWeight();
 		}
 
 		public int hashCode(){

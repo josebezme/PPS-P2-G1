@@ -17,12 +17,12 @@ public class HistoryAnalyzer{
 	Game game;
 	LinkedList<Player> playersTeamA;
 	LinkedList<Player> playersTeamB;
-	boolean selfGame;
 	Set<Player> seen = new HashSet<Player>();
-	HashMap<String, OtherTeam>  name2TeamObj = new HashMap<String,OtherTeam>();
+	Map<String, OtherTeam>  name2TeamObj; 
 
 	OtherTeam teamAObject;
 	OtherTeam teamBObject;
+	private Team ourTeam;
 
 	/*
 		Game object contains
@@ -46,61 +46,51 @@ public class HistoryAnalyzer{
 		Observation: the smaller the index of the Game[], the more recent the game is.
 
 	*/
-	public HistoryAnalyzer(){
-		selfGame=false;
+	public HistoryAnalyzer(Team team) {
+		this.name2TeamObj = team.name2OtherTeam;
+		this.ourTeam = team;
 	}
-	public void takeHistory(Game[] history, int totalPlayers){
-		selfGame=false;
-
+	
+	public void takeHistory(Game[] history, int totalPlayers) {
 		this.history = history;
 	
-		//update
-
+		//TEAM
+		//if I've never seen that team, initialize'
+		
 		if(history == null || history.length ==  0) {
 			return; //no need to take history
 		} 
 
 		this.game = history[0];
-
-		//TEAM
-		//if I've never seen that team, initialize'
-		if(game.teamA.equals(game.teamB))
-			selfGame=true;
+		
 		if(!name2TeamObj.containsKey(game.teamA)){
 			teamAObject = new OtherTeam(game.teamA, totalPlayers);
 			name2TeamObj.put(game.teamA, teamAObject);
 			System.out.println("adding new team : " + game.teamA);
-
 		} else {
 			teamAObject = name2TeamObj.get(game.teamA);
-			
 		}
-
+		
 		if(!name2TeamObj.containsKey(game.teamB)){
 			teamBObject= new  OtherTeam(game.teamB,totalPlayers);
 			name2TeamObj.put(game.teamB, teamBObject);
 			System.out.println("adding new team : " + game.teamB);
 		} else {
 			//if self game
-				
+			
 			//if not self game
 			teamBObject = name2TeamObj.get(game.teamB);
 		}
+
+		
 		System.out.println("teamA " + Arrays.toString(game.playersA()));
 		System.out.println("teamB " + Arrays.toString(game.playersB()));
 		
-		if(selfGame){
-			teamAObject.setCurrentPlayingTeam(game.playersA());
-			teamBObject.setCurrentPlayingTeam2(game.playersB());
-		} else {
-			teamAObject.setCurrentPlayingTeam(game.playersA());
-			teamBObject.setCurrentPlayingTeam(game.playersB());
-		}
+		teamAObject.setCurrentPlayingTeam(game.playersA());
+		teamBObject.setCurrentPlayingTeam(game.playersB());
 
 		System.out.println(Arrays.toString(teamAObject.getCurrentPlayingTeam()));
-		System.out.println(Arrays.toString(teamBObject.getCurrentPlayingTeam2()));
 		
-
 		//initiize if not seen
 		playersTeamA = new LinkedList<Player>();
 		playersTeamB = new LinkedList<Player>();
@@ -199,25 +189,15 @@ public class HistoryAnalyzer{
 			//Passing Update
 			int lastHolder = holders.length - 1;
 
-			if(selfGame){
-				if(r.attacksA) {
-					attackBH = teamAObject.getPlayer(holders[lastHolder]);
-					defendBH = teamBObject.getPlayer2(defenders[holders[lastHolder]-1]);
-				} else {
-					attackBH = teamBObject.getPlayer2(holders[lastHolder]);
-					defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
-				}
+			if(r.attacksA) {
+				//team A is attacking
+				attackBH = teamAObject.getPlayerByPosition(holders[lastHolder]);
+				defendBH = teamBObject.getPlayerByPosition(defenders[holders[lastHolder]-1]);
+				
 			} else {
-				if(r.attacksA) {
-					//team A is attacking
-					attackBH = teamAObject.getPlayer(holders[lastHolder]);
-					defendBH = teamBObject.getPlayer(defenders[holders[lastHolder]-1]);
-					
-				} else {
-					//team B is attacking
-					attackBH = teamBObject.getPlayer(holders[lastHolder]);
-					defendBH = teamAObject.getPlayer(defenders[holders[lastHolder]-1]);
-				}
+				//team B is attacking
+				attackBH = teamBObject.getPlayerByPosition(holders[lastHolder]);
+				defendBH = teamAObject.getPlayerByPosition(defenders[holders[lastHolder]-1]);
 			}
 
 			// Assume the last ballholder was a passer and penalize in the case
