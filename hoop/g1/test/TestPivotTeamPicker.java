@@ -12,7 +12,7 @@ public class TestPivotTeamPicker {
 	public static void main(String[] args) {
 		TeamPicker picker = new PivotTeamPicker();
 		
-		picker.initialize(12, 10, 10);
+		picker.initialize(12);
 		
 		for(int i = 0; i < 1; i++) {// Games
 			

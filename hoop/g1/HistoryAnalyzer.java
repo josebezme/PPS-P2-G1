@@ -108,12 +108,6 @@ public class HistoryAnalyzer{
 			defendBH = playersA[defenders[holders[lastHolder]-1] - 1];
 		}
 
-		// Assume the last ballholder was a passer and penalize in the case
-
-
-		//Assume that the last ballholder defender was a passer defender
-
-
 		switch(r.lastAction()) {
 			case MISSED: // implies that pass was successful
 				// Shooter Point of view
@@ -233,14 +227,14 @@ public class HistoryAnalyzer{
 			
 			for (Player p : pList ) {
 				String output = "Player:" + p.playerId +
-						"\t"+ String.format("%1$.2f", p.shotsMade) +
-						"\t"+ String.format("%1$.2f", p.shotsAttempted) +
-						"\t"+ String.format("%1$.2f", p.passesMade) +
-						"\t"+ String.format("%1$.2f", p.passesAttempted) + 
-						"\t"+ String.format("%1$.2f", p.blocksMade) +
-						"\t"+ String.format("%1$.2f", p.blocksAttempted) +
-						"\t"+ String.format("%1$.2f", p.interceptsMade) +
-						"\t"+ String.format("%1$.2f", p.interceptsAttempted);
+						"\t"+ String.format("%1$.2f", p.getShotsMade()) +
+						"\t"+ String.format("%1$.2f", p.getShotsAttempted()) +
+						"\t"+ String.format("%1$.2f", p.getPassesMade()) +
+						"\t"+ String.format("%1$.2f", p.getPassesAttempted()) + 
+						"\t"+ String.format("%1$.2f", p.getBlocksMade()) +
+						"\t"+ String.format("%1$.2f", p.getBlocksAttempted()) +
+						"\t"+ String.format("%1$.2f", p.getInterceptsMade()) +
+						"\t"+ String.format("%1$.2f", p.getInterceptsAttempted());
 				logger.log(output);
 				
 			}
