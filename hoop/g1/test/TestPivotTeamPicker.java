@@ -3,9 +3,9 @@ package hoop.g1.test;
 import java.util.Arrays;
 
 import hoop.g1.Move;
+import hoop.g1.PivotTeamPicker;
 import hoop.g1.Team;
-import hoop.g1.Team.PivotTeamPicker;
-import hoop.g1.Team.TeamPicker;
+import hoop.g1.TeamPicker;
 
 public class TestPivotTeamPicker {
 

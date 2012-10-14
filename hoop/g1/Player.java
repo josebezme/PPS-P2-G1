@@ -1,5 +1,7 @@
 package hoop.g1;
 
+import java.util.Comparator;
+
 public class Player {
 	public final int playerId;
 	public int positionId;
@@ -165,6 +167,39 @@ public class Player {
 	public double getInterceptsAttempted() {
 		return interceptsAttempted;
 	}
+	
+	
+	public static Comparator<Player> SORT_BY_SHOOTING = new Comparator<Player>() {
+		@Override
+		public int compare(Player p1, Player p2) {
+			return 	(p1.getShootingWeight() > p2.getShootingWeight()) ? -1 :
+					(p1.getShootingWeight() < p2.getShootingWeight()) ?  1 : 0 ;
+		}
+	};
+	
+	public static Comparator<Player> SORT_BY_PASSING = new Comparator<Player>() {
+		@Override
+		public int compare(Player p1, Player p2) {
+			return 	(p1.getPassingWeight() > p2.getPassingWeight()) ? -1 :
+					(p1.getPassingWeight() < p2.getPassingWeight()) ?  1 : 0 ;
+		}
+	};
+	
+	public static Comparator<Player> SORT_BY_BLOCKING = new Comparator<Player>() {
+		@Override
+		public int compare(Player p1, Player p2) {
+			return 	(p1.getBlockingWeight() > p2.getBlockingWeight()) ? -1 :
+					(p1.getBlockingWeight() < p2.getBlockingWeight()) ?  1 : 0 ;
+		}
+	};
+	
+	public static Comparator<Player> SORT_BY_OVERALL = new Comparator<Player>() {
+		@Override
+		public int compare(Player p1, Player p2) {
+			return 	(p1.getTotalWeight() > p2.getTotalWeight()) ? -1 :
+					(p1.getTotalWeight() < p2.getTotalWeight()) ?  1 : 0 ;
+		}
+	};
 	
 	
 }
