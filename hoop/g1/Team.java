@@ -198,13 +198,23 @@ public class Team implements hoop.sim.Team, Logger {
 	public int pickBestPasser() {
 		Player bestPasser = currentPlayingTeam[0];
 		for(Player next : currentPlayingTeam) {
-			if(next.getPassingWeight() > bestPasser.getPassingWeight()) {
+			if(next.getPassingRatio() > bestPasser.getPassingRatio()) {
 				bestPasser = next;
 			}
 		}
 		
 		return bestPasser.positionId;
 	}
+	
+//	public int pickBestShooterOverall() {
+//		Player bestShooter = ourPlayers.get(0);
+//		
+//		
+//	}
+//	
+//	public double getCorrectedRatio(double ratio, double total) {
+//		
+//	}
 
 	/**
 	 * Return
@@ -226,7 +236,7 @@ public class Team implements hoop.sim.Team, Logger {
 		switch(attackingGame.lastMove.action) {
 			case START:  
 				int oldHolder = holder;
-				holder = searchShotMismatch(defenders, oldHolder);
+				holder = getMistmatch(defenders, oldHolder);
 				
 				attackingGame.lastMove = new Move(oldHolder, holder, Status.PASSING);
 				return holder;
@@ -246,24 +256,121 @@ public class Team implements hoop.sim.Team, Logger {
 		return 0;
 	}
 	
-	public int searchShotMismatch(int[] defenders, int ballHolder) {
-		int bestPositionId = 0;
-		double bestShootingWeight = 0;
+	private static final double z = 1.96;
+	public int getMistmatch(int[] defenders, int ballHolder) {
+		double highestConfidentDiff = -10000000;
+		
+		List<Player> bestPlayers = new ArrayList<Player>();
 		
 		for(int i = 0; i < TEAM_SIZE; i++) {
 			if(i + 1 == ballHolder) {
 				continue;
 			}
 			
-			Player p = ourPlayers.get(getPlayerForPosition(i + 1) - 1);
+			Player offPlayer = currentPlayingTeam[i];
+			Player defPlayer = currentOpponentTeam[defenders[i] - 1];
 			
-			if(p.getShootingWeight() > bestShootingWeight) {
-				bestPositionId = p.positionId;
-				bestShootingWeight = p.getShootingWeight();
+			double confidentDiff = -1000000;
+			if(offPlayer.getShotsAttempted() != 0 && defPlayer.getBlocksAttempted() != 0) {
+				confidentDiff = getConfidence(offPlayer, defPlayer);
+			}
+			
+			if(confidentDiff > highestConfidentDiff) {
+				bestPlayers.clear();
+				bestPlayers.add(offPlayer);
+				highestConfidentDiff = confidentDiff;
+			} else if(confidentDiff == highestConfidentDiff) {
+				bestPlayers.add(offPlayer);
+			} else {
+				log("Doing nothing");
 			}
 		}
 		
-		return bestPositionId;
+		Collections.sort(bestPlayers, Player.SORT_BY_SHOOTING);
+		
+		return bestPlayers.get(0).positionId;
+	}
+	
+	public int[] getBlockingMistmatch() {
+		int[] team = new int[TEAM_SIZE];
+		
+		double bestConfidence = 10000;
+		int[] bestMatch = new int[TEAM_SIZE];
+		
+		for(int a = 0; a < TEAM_SIZE; a++) { // All possible orderings
+			for(int b = 0; b < TEAM_SIZE; b++) { // New position
+				if(b == a) {continue;}
+				
+				for(int c = 0; c < TEAM_SIZE; c++) { // Shift
+					if(c == b || c == a) {continue;}
+					
+					for(int d = 0; d < TEAM_SIZE; d++) {
+						if(d == c || d == b || d == a) {continue;}
+						
+						for(int e = 0; e < TEAM_SIZE; e++) {
+							if(e == d || e == c || e == b || e == a) {continue;}
+							
+							team[0] = a + 1;
+							team[1] = b + 1;
+							team[2] = c + 1;
+							team[3] = d + 1;
+							team[4] = e + 1;
+							
+							double confidence = getConfidenceOfMatch(team);
+						
+							if(confidence < bestConfidence) {
+								bestConfidence = confidence;
+								bestMatch = team;
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return bestMatch;
+	}
+	
+	private double getConfidenceOfMatch(int[] match) {
+		double sum = 0;
+		
+		for(int i = 0; i < TEAM_SIZE; i++) {
+			Player defPlayer = currentPlayingTeam[match[i] - 1];
+			Player offPlayer = currentOpponentTeam[i];
+			
+			if(offPlayer.getShotsAttempted() != 0 && defPlayer.getBlocksAttempted() != 0) {
+				sum += getConfidence(offPlayer, defPlayer, false);
+			} else {
+				sum += 2;
+			}
+			
+		}
+		
+		return sum;
+	}
+	
+	public static double getConfidence(Player offPlayer, Player defPlayer) {
+		return getConfidence(offPlayer, defPlayer, false);
+	}
+	
+	public static double getConfidence(Player offPlayer, Player defPlayer, boolean upper) {
+		double offShooting = offPlayer.getShootingRatio();
+		double defBlocking = defPlayer.getBlockingRatio();
+		
+		double offStdErr = stdErr(offShooting, offPlayer.getShotsAttempted());
+		double defStdErr = stdErr(defBlocking, defPlayer.getBlocksAttempted());
+		
+		double interval = Math.sqrt(offStdErr + defStdErr)  * z;
+		
+		if(upper) {
+			return (offShooting - defBlocking) + interval;
+		} else {
+			return (offShooting - defBlocking) - interval;
+		}
+	}
+	
+	public static double stdErr(double ratio, double denom) {
+		return (ratio * (1 - ratio)) / denom;
 	}
 	
 	public int getPlayerForPosition(int position) {
@@ -313,7 +420,8 @@ public class Team implements hoop.sim.Team, Logger {
 		for(int i = 0; i < TEAM_SIZE; i++) {
 			defenders[opponentPlayers.get(i).positionId - 1] = players.get(i).positionId;  
 		}
-		
 		return defenders;
+		
+//		return getBlockingMistmatch();
 	}
 }

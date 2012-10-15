@@ -203,10 +203,10 @@ public class HistoryAnalyzer{
 			
 			for (Player p : pList ) {
 				String output = "Player:" + p.playerId +
-						"\t"+ String.format("%1$.2f", p.getShootingWeight()) +
-						"\t"+ String.format("%1$.2f", p.getBlockingWeight()) +
-						"\t"+ String.format("%1$.2f", p.getPassingWeight()) +
-						"\t"+ String.format("%1$.2f", p.getInterceptionWeight());
+						"\t"+ String.format("%1$.2f", p.getShootingRatio()) +
+						"\t"+ String.format("%1$.2f", p.getBlockingRatio()) +
+						"\t"+ String.format("%1$.2f", p.getPassingRatio()) +
+						"\t"+ String.format("%1$.2f", p.getInterceptionRatio());
 				logger.log(output);
 				
 			}

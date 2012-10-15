@@ -87,7 +87,7 @@ public class Player {
 		interceptsAttempted++;
 	}
 
-	public double getShootingWeight() {
+	public double getShootingRatio() {
 		if (shotsAttempted != 0) {
 			return shotsMade / shotsAttempted;
 		} else {
@@ -95,7 +95,7 @@ public class Player {
 		}
 	}
 
-	public double getBlockingWeight() {
+	public double getBlockingRatio() {
 		if (blocksAttempted != 0) {
 			return blocksMade / blocksAttempted;
 		} else {
@@ -104,7 +104,7 @@ public class Player {
 
 	}
 
-	public double getPassingWeight() {
+	public double getPassingRatio() {
 		if (passesAttempted != 0) {
 			return passesMade / passesAttempted;
 		} else {
@@ -113,7 +113,7 @@ public class Player {
 
 	}
 
-	public double getInterceptionWeight() {
+	public double getInterceptionRatio() {
 		if (interceptsAttempted != 0) {
 			return interceptsMade / interceptsAttempted;
 		} else {
@@ -122,7 +122,7 @@ public class Player {
 	}
 
 	public double getTotalWeight() {
-		return getShootingWeight() + getBlockingWeight();
+		return getShootingRatio() + getBlockingRatio();
 	}
 
 	public int hashCode() {
@@ -168,28 +168,43 @@ public class Player {
 		return interceptsAttempted;
 	}
 	
+	public void setShotsAttempted(int shots) {
+		this.shotsAttempted = shots;
+	}
+	
+	public void setShotsMade(double shotsMade) {
+		this.shotsMade = shotsMade;
+	}
+	
+	public void setBlocksAttempted(double blocksAttempted) {
+		this.blocksAttempted = blocksAttempted;
+	}
+	
+	public void setBlocksMade(double blocksMade) {
+		this.blocksMade = blocksMade;
+	}
 	
 	public static Comparator<Player> SORT_BY_SHOOTING = new Comparator<Player>() {
 		@Override
 		public int compare(Player p1, Player p2) {
-			return 	(p1.getShootingWeight() > p2.getShootingWeight()) ? -1 :
-					(p1.getShootingWeight() < p2.getShootingWeight()) ?  1 : 0 ;
+			return 	(p1.getShootingRatio() > p2.getShootingRatio()) ? -1 :
+					(p1.getShootingRatio() < p2.getShootingRatio()) ?  1 : 0 ;
 		}
 	};
 	
 	public static Comparator<Player> SORT_BY_PASSING = new Comparator<Player>() {
 		@Override
 		public int compare(Player p1, Player p2) {
-			return 	(p1.getPassingWeight() > p2.getPassingWeight()) ? -1 :
-					(p1.getPassingWeight() < p2.getPassingWeight()) ?  1 : 0 ;
+			return 	(p1.getPassingRatio() > p2.getPassingRatio()) ? -1 :
+					(p1.getPassingRatio() < p2.getPassingRatio()) ?  1 : 0 ;
 		}
 	};
 	
 	public static Comparator<Player> SORT_BY_BLOCKING = new Comparator<Player>() {
 		@Override
 		public int compare(Player p1, Player p2) {
-			return 	(p1.getBlockingWeight() > p2.getBlockingWeight()) ? -1 :
-					(p1.getBlockingWeight() < p2.getBlockingWeight()) ?  1 : 0 ;
+			return 	(p1.getBlockingRatio() > p2.getBlockingRatio()) ? -1 :
+					(p1.getBlockingRatio() < p2.getBlockingRatio()) ?  1 : 0 ;
 		}
 	};
 	
