@@ -339,7 +339,7 @@ public class Team implements hoop.sim.Team, Logger {
 			Player offPlayer = currentOpponentTeam[i];
 			
 			if(offPlayer.getShotsAttempted() != 0 && defPlayer.getBlocksAttempted() != 0) {
-				sum += getConfidence(offPlayer, defPlayer, false);
+				sum += getConfidence(offPlayer, defPlayer, true);
 			} else {
 				sum += 2;
 			}
