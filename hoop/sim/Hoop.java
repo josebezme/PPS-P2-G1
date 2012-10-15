@@ -8,10 +8,10 @@ public class Hoop {
 
 	// configuration info
 	private static boolean display = false;
-	private static int gameTurns = 10;
-	private static int selfGames = 10;
+	private static int gameTurns = 100;
+	private static int selfGames = 100;
 	private static int seasons = 10;
-
+	public static double[][][] stats; 
 	// return game turns
 	public static int gameTurns() { return gameTurns; }
 
@@ -116,7 +116,10 @@ public class Hoop {
 		System.err.println("  Players per team:   " + align("" + playerPool, 5, true));
 		// generate team stats
 		Random gen = new Random();
-		double[][][] stats = stats(gen, teams.length, playerPool);
+		stats = stats(gen, teams.length, playerPool);
+
+
+
 		// history of self games
 		Game[][] selfResults = new Game [teams.length][selfGames];
 		// play training games
@@ -150,6 +153,14 @@ public class Hoop {
 		for (Team team : teams)
 			if (team.name().length() > maxName)
 				maxName = team.name().length();
+
+		
+
+
+
+
+
+
 		// compute and print tournament schedule
 		Vector <Iterable <Iterable <Pairs.Pair>>> schedule =
 		    new Vector <Iterable <Iterable <Pairs.Pair>>> ();
@@ -230,6 +241,9 @@ public class Hoop {
 		System.err.println("\n### Tournament points ###");
 		for (i = 0 ; i != teams.length ; ++i)
 			System.err.println(align("" + points[i], 6, true) + "   " + teams[i].name());
+
+
+		printRealStat();
 		System.exit(0);
 	}
 
@@ -585,5 +599,54 @@ public class Hoop {
 			points[i] = points[max];
 			points[max] = teamPoints;
 		}
+	}
+
+	private static void printRealStat(){
+		System.out.println("------------CHEAT KEY BEGINS ------------------");
+		for (int t=0; t < stats.length; t++) {
+			int bestShooterNumber=-1;
+			int bestPasserNumber=-1;
+			int bestBlockerNumber=-1;
+			int bestInterceptorNumber=-1;
+			double bestShooterStat=-1;
+			double bestBlockerStat=Integer.MAX_VALUE;
+			double bestPasserStat=-1;
+			double bestInterceptorStat=Integer.MAX_VALUE;
+			System.out.println("Team [" + t + "]");
+			System.out.println("player\tshoot\tdefense\tpass\tintercept");
+			for (int p=0; p < stats[0].length; p++) {
+				// System.out.print("--> Player [" + p + "] : ");
+				System.out.print(p+1 + "\t");	
+				for (int s=0;s < stats[0][0].length; s++ ) {
+					System.out.printf("%.3f\t", stats[t][p][s]);
+					if (s == 0 && bestShooterStat < stats[t][p][0]) {
+						bestShooterStat = stats[t][p][0];
+						bestShooterNumber = p+1;
+					}
+					if(s == 1 && bestBlockerStat > stats[t][p][1]){
+						bestBlockerStat = stats[t][p][1];
+						bestBlockerNumber = p+1;
+					}
+					if(s == 2 && bestPasserStat < stats[t][p][2]){
+						bestPasserStat = stats[t][p][2];
+						bestPasserNumber = p+1;
+					}
+					if(s == 3 && bestInterceptorStat > stats[t][p][3]){
+						bestInterceptorStat = stats[t][p][3];
+						bestInterceptorNumber = p+1;
+					}
+				}
+				System.out.println();
+				
+				
+			}
+			System.out.print("bestShooter is : " + bestShooterNumber);
+			System.out.print("| bestBlocker is : " + bestBlockerNumber);
+			System.out.print("| bestPasser is : " + bestPasserNumber);
+			System.out.println("| bestInterceptor is : " + bestInterceptorNumber);
+			System.out.println("=====================");
+			
+		}
+		System.out.println("------------CHEAT KEY ENDS ------------------");
 	}
 }
